@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WS Client</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        font: 14px/1.4 "SFMono-Regular", Menlo, Consolas, monospace;
+        background: #0f1419;
+        color: #e6edf3;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        color: #9fb0c0;
+      }
+
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #27313b;
+        border-radius: 6px;
+        background: #0b0f13;
+        color: #e6edf3;
+      }
+
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      button {
+        margin-top: 12px;
+        padding: 8px 12px;
+        border: 1px solid #27313b;
+        border-radius: 6px;
+        background: #1a2128;
+        color: #e6edf3;
+        cursor: pointer;
+      }
+
+      .row {
+        margin-bottom: 16px;
+      }
+
+      .log {
+        margin-top: 16px;
+        padding: 10px;
+        border: 1px solid #27313b;
+        border-radius: 6px;
+        background: #0b0f13;
+        white-space: pre-wrap;
+        min-height: 80px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <label for="url">WebSocket URL</label>
+      <input id="url" type="text" value="ws://localhost:8080/ws" />
+    </div>
+
+    <div class="row">
+      <label for="message">Message</label>
+      <textarea id="message" placeholder="hello"></textarea>
+      <button id="send">Connect + Send</button>
+    </div>
+
+    <div class="log" id="log">Idle</div>
+
+    <script>
+      const urlInput = document.getElementById("url");
+      const messageInput = document.getElementById("message");
+      const sendBtn = document.getElementById("send");
+      const logEl = document.getElementById("log");
+
+      const log = (text) => {
+        logEl.textContent = text;
+      };
+
+      sendBtn.addEventListener("click", () => {
+        const url = urlInput.value.trim();
+        const payload = messageInput.value;
+        if (!url) {
+          log("URL required.");
+          return;
+        }
+
+        const socket = new WebSocket(url);
+        socket.onopen = () => {
+          socket.send(payload);
+          log(`Sent: ${payload || "(empty)"}`);
+          socket.close(1000, "done");
+        };
+        socket.onerror = () => {
+          log("WebSocket error.");
+        };
+      });
+    </script>
+  </body>
+</html>

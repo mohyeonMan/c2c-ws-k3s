@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ws
+  jackson:
+    default-property-inclusion: non_null
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+c2c:
+  mq:
+    event:
+      exchange: ${C2C_MQ_EVENT_EXCHANGE:c2c.event}
+      queue: ${C2C_MQ_EVENT_QUEUE:c2c.event.queue}
+      routing-key: ${C2C_MQ_EVENT_ROUTING_KEY:event.event}
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss}%-5level[%thread]%logger{0}:: %msg%n"
