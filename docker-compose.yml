@@ -16,7 +16,7 @@ services:
     cpus: "2.0"
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     working_dir: /workspace
     volumes:
       - .:/workspace

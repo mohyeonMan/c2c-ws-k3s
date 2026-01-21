@@ -1,10 +1,19 @@
-FROM eclipse-temurin:21-jdk
+FROM gradle:8.8-jdk21 AS build
 
-WORKDIR /workspace
+WORKDIR /home/gradle/src
 
-# Gradle uses this for caches; keep it off the bind-mounted repo.
-ENV GRADLE_USER_HOME=/home/gradle/.gradle
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY src ./src
 
-RUN mkdir -p /home/gradle/.gradle
+RUN gradle --no-daemon clean bootJar
 
-CMD ["bash", "-lc", "sleep infinity"]
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+COPY --from=build /home/gradle/src/build/libs/*.jar /app/app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
