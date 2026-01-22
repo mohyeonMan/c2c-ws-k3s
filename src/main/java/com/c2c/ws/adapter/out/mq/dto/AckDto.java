@@ -1,0 +1,14 @@
+package com.c2c.ws.adapter.out.mq.dto;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class AckDto {
+    private final String ackId;
+    private final String eventId;
+    private final String action;
+    private final String sentAt;
+
+}
