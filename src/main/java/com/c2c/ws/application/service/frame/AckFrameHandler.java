@@ -33,7 +33,6 @@ public class AckFrameHandler implements FrameHandler {
         Ack ack = Ack.builder()
                 .ackId(IdGenerator.generateId("ack"))
                 .eventId(frame.getEventId())
-                .action(frame.getAction())
                 .sentAt(Instant.now())
                 .build();
 

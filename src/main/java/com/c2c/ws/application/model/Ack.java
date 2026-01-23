@@ -13,7 +13,6 @@ public class Ack {
 
     private final String ackId;
     private final String eventId;
-    private final Action action; 
     private final Instant sentAt;
     
 }

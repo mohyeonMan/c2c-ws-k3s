@@ -56,3 +56,25 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+        with:
+          repository: mohyeonMan/home-k3s-infra
+          ref: main
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          path: infra
+
+      - name: Update kustomization tag
+        run: |
+          cd infra
+          yq -i '.images[0].newTag = "sha-${{ github.sha }}"' apps/c2c/ws/kustomization.yaml
+
+      - name: Commit and push
+        run: |
+          cd infra
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/c2c/ws/kustomization.yaml
+          git commit -m "deploy: update image tag to sha-${{ github.sha }}" || exit 0
+          git push
+

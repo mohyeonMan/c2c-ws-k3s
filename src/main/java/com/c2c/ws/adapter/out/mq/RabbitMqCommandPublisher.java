@@ -34,6 +34,8 @@ public class RabbitMqCommandPublisher implements PublishCommandPort {
         CommandDto commandDto = CommandDto.builder()
                 .commandId(command.getCommandId())
                 .requestId(command.getRequestId())
+                .userId(command.getUserId())
+                .action(command.getAction().name())
                 .payload(command.getPayload())
                 .sentAt(TimeFormat.format(command.getSentAt()))
                 .build();
