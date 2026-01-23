@@ -16,11 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class CommandFrameHandler extends AbstractFrameHandler {
+public class DefaultCommandFrameHandler extends AbstractCommandFrameHandler {
 
     private final CommandDispatcherUseCase commandDispatcherUseCase;
 
-    public CommandFrameHandler(
+    public DefaultCommandFrameHandler(
             SendToSessionPort sendToSessionPort,
             CommonMapper commonMapper,
             CommandDispatcherUseCase commandDispatcherUseCase
@@ -50,7 +50,6 @@ public class CommandFrameHandler extends AbstractFrameHandler {
                 .build();
 
         commandDispatcherUseCase.dispatchCommand(command);
-
 
     }   
     

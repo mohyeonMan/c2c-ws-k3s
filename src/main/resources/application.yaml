@@ -4,13 +4,24 @@ spring:
   jackson:
     default-property-inclusion: non_null
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
     port: ${SPRING_RABBITMQ_PORT:5672}
     username: ${SPRING_RABBITMQ_USERNAME:guest}
     password: ${SPRING_RABBITMQ_PASSWORD:guest}
+  redis:
+    host: ${SPRING_REDIS_HOST:redis}
+    port: ${SPRING_REDIS_PORT:6379}
 
 c2c:
   mq:
+    command:
+      exchange: ${C2C_MQ_COMMAND_EXCHANGE:c2c.command}
+      queue: ${C2C_MQ_COMMAND_QUEUE:c2c.command.queue}
+      routing-key: ${C2C_MQ_COMMAND_ROUTING_KEY:command.command}
+    ack:
+      exchange: ${C2C_MQ_ACK_EXCHANGE:c2c.ack}
+      queue: ${C2C_MQ_ACK_QUEUE:c2c.ack.queue}
+      routing-key: ${C2C_MQ_ACK_ROUTING_KEY:ack.ack}
     event:
       exchange: ${C2C_MQ_EVENT_EXCHANGE:c2c.event}
       queue: ${C2C_MQ_EVENT_QUEUE:c2c.event.queue}

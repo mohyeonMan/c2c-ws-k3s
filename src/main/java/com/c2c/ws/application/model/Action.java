@@ -1,5 +1,9 @@
 package com.c2c.ws.application.model;
 
+import java.util.Locale;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 
 public enum Action {
     CONN_CLOSED,
@@ -11,5 +15,18 @@ public enum Action {
     LEAVE,
     CLIENT_MESSAGE,
     HEARTBEAT,
+    @JsonEnumDefaultValue
     UNKNOWN;
+
+    @JsonCreator
+    public static Action from(String value) {
+        if (value == null) {
+            return UNKNOWN;
+        }
+        try {
+            return Action.valueOf(value.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return UNKNOWN;
+        }
+    }
 }

@@ -15,14 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class AbstractFrameHandler implements FrameHandler{
+public abstract class AbstractCommandFrameHandler implements FrameHandler{
     private final SendToSessionPort sendToSessionPort;
     private final CommonMapper commonMapper;
 
     @Override
     public void handle(String userId, CFrame frame) {
         try {
-            ack(userId, frame);
+            sendAck(userId, frame);
             doHandle(userId, frame);
         } catch (Exception e) {
             sendErrorResult(userId, frame, e);
@@ -31,7 +31,7 @@ public abstract class AbstractFrameHandler implements FrameHandler{
 
     protected abstract void doHandle(String userId, CFrame frame);
 
-    protected void ack(String userID, CFrame frame) {
+    protected void sendAck(String userID, CFrame frame) {
         SFrame ack = buildAck(frame);
         sendToSessionPort.sendToSession(userID, ack);
     }

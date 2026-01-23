@@ -54,6 +54,18 @@
         margin-bottom: 16px;
       }
 
+      .row.inline {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
       .log {
         margin-top: 16px;
         padding: 10px;
@@ -71,41 +83,137 @@
       <input id="url" type="text" value="ws://localhost:8080/ws" />
     </div>
 
+    <div class="row inline">
+      <div>
+        <label for="userId">User ID (query param)</label>
+        <input id="userId" type="text" value="user-1" />
+      </div>
+      <div>
+        <label for="heartbeat">Heartbeat Interval (ms)</label>
+        <input id="heartbeat" type="number" value="20000" min="1000" step="1000" />
+      </div>
+    </div>
+
+    <div class="row inline">
+      <div>
+        <label for="action">Action</label>
+        <input id="action" type="text" value="CLIENT_MESSAGE" />
+      </div>
+      <div>
+        <label for="payload">Payload (string)</label>
+        <input id="payload" type="text" value="hello" />
+      </div>
+    </div>
+
     <div class="row">
-      <label for="message">Message</label>
-      <textarea id="message" placeholder="hello"></textarea>
-      <button id="send">Connect + Send</button>
+      <div class="actions">
+        <button id="connect">Connect</button>
+        <button id="disconnect">Disconnect</button>
+        <button id="send">Send Frame</button>
+      </div>
     </div>
 
     <div class="log" id="log">Idle</div>
 
     <script>
       const urlInput = document.getElementById("url");
-      const messageInput = document.getElementById("message");
+      const userIdInput = document.getElementById("userId");
+      const heartbeatInput = document.getElementById("heartbeat");
+      const actionInput = document.getElementById("action");
+      const payloadInput = document.getElementById("payload");
+      const connectBtn = document.getElementById("connect");
+      const disconnectBtn = document.getElementById("disconnect");
       const sendBtn = document.getElementById("send");
       const logEl = document.getElementById("log");
+
+      let socket = null;
+      let heartbeatTimer = null;
 
       const log = (text) => {
         logEl.textContent = text;
       };
 
-      sendBtn.addEventListener("click", () => {
-        const url = urlInput.value.trim();
-        const payload = messageInput.value;
+      const buildUrl = () => {
+        const base = urlInput.value.trim();
+        if (!base) return "";
+        const userId = userIdInput.value.trim();
+        if (!userId) return base;
+        const joiner = base.includes("?") ? "&" : "?";
+        return `${base}${joiner}userId=${encodeURIComponent(userId)}`;
+      };
+
+      const startHeartbeat = () => {
+        const interval = Number(heartbeatInput.value);
+        if (!socket || !Number.isFinite(interval) || interval <= 0) return;
+        heartbeatTimer = setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(
+              JSON.stringify({
+                requestId: `hb-${Date.now()}`,
+                type: "COMMAND",
+                action: "HEARTBEAT",
+                payload: null,
+              })
+            );
+          }
+        }, interval);
+      };
+
+      const stopHeartbeat = () => {
+        if (heartbeatTimer) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
+        }
+      };
+
+      connectBtn.addEventListener("click", () => {
+        const url = buildUrl();
         if (!url) {
           log("URL required.");
           return;
         }
-
-        const socket = new WebSocket(url);
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          log("Already connected.");
+          return;
+        }
+        socket = new WebSocket(url);
         socket.onopen = () => {
-          socket.send(payload);
-          log(`Sent: ${payload || "(empty)"}`);
-          socket.close(1000, "done");
+          log(`Connected: ${url}`);
+          startHeartbeat();
+        };
+        socket.onmessage = (event) => {
+          log(`Recv: ${event.data}`);
         };
         socket.onerror = () => {
           log("WebSocket error.");
         };
+        socket.onclose = (event) => {
+          stopHeartbeat();
+          log(`Closed: ${event.code} ${event.reason || ""}`.trim());
+        };
+      });
+
+      disconnectBtn.addEventListener("click", () => {
+        if (socket) {
+          socket.close(1000, "client close");
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          log("Socket not connected.");
+          return;
+        }
+        const action = actionInput.value.trim() || "CLIENT_MESSAGE";
+        const payload = payloadInput.value;
+        const frame = {
+          requestId: `req-${Date.now()}`,
+          type: "COMMAND",
+          action,
+          payload,
+        };
+        socket.send(JSON.stringify(frame));
+        log(`Sent: ${JSON.stringify(frame)}`);
       });
     </script>
   </body>

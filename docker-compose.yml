@@ -11,6 +11,12 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     restart: unless-stopped
+  redis:
+    mem_limit: 256m
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
   ws:
     mem_limit: 1g
     cpus: "2.0"
@@ -27,8 +33,12 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      # GRADLE_USER_HOME: /tmp/gradle
     depends_on:
       - rabbitmq
+      - redis
     command: ["bash", "-lc", "sleep infinity"]
     stdin_open: true
     tty: true

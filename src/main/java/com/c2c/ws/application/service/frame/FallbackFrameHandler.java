@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class FallbackFrameHandler extends AbstractFrameHandler{
+public class FallbackFrameHandler extends AbstractCommandFrameHandler{
     
     public FallbackFrameHandler(
             SendToSessionPort sendToSessionPort,
