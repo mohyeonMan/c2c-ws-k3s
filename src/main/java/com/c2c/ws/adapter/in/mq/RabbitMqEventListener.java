@@ -1,7 +1,48 @@
 package com.c2c.ws.adapter.in.mq;
 
-import com.c2c.ws.application.port.in.mq.ConsumeEventPort;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
 
+import com.c2c.ws.adapter.in.mq.dto.EventDto;
+import com.c2c.ws.adapter.out.ws.dto.SFrameType;
+import com.c2c.ws.adapter.out.ws.dto.Status;
+import com.c2c.ws.application.model.Action;
+import com.c2c.ws.application.model.Event;
+import com.c2c.ws.application.port.in.mq.ConsumeEventPort;
+import com.c2c.ws.application.port.in.mq.EventHandler;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class RabbitMqEventListener implements ConsumeEventPort {
-    
+    private final EventHandler eventHandler;
+
+    @Override
+    @RabbitListener(queues = "${c2c.mq.event.queue}")
+    public void onEvent(EventDto eventDto) {
+        if (eventDto == null) {
+            log.warn("event is null");
+            return;
+        }
+
+        SFrameType type = SFrameType.from(eventDto.getType());
+        Status status = Status.from(eventDto.getStatus());
+        Action action = Action.from(eventDto.getAction());
+
+        Event event = Event.builder()
+                .requestId(eventDto.getRequestId())
+                .frameId(eventDto.getFrameId())
+                .userId(eventDto.getUserId())
+                .eventId(eventDto.getEventId())
+                .type(type)
+                .action(action)
+                .status(status)
+                .payload(eventDto.getPayload())
+                .build();
+        eventHandler.handle(event);
+    }
+
 }

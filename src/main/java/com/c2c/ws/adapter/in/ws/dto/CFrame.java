@@ -12,7 +12,7 @@ import lombok.ToString;
 public class CFrame {
     
     private String requestId;
-    private String frameId;
+    // private String frameId;
     private String eventId;
     private CFrameType type;
     private Action action;

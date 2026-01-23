@@ -25,6 +25,7 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
             sendAck(userId, frame);
             doHandle(userId, frame);
         } catch (Exception e) {
+            log.error("ERROR : {}",e.getMessage(),e);
             sendErrorResult(userId, frame, e);
         }
     }

@@ -24,11 +24,14 @@ public class RedisSessionPresenceAdapter implements SessionPresencePort {
     }
 
     @Override
-    public void markSessionActive(String userId) {
+    public void markSessionActive(String userId, String nodeQueue) {
         if (userId == null || userId.isBlank()) {
             return;
         }
-        redisTemplate.opsForValue().set(key(userId), "1", ttl);
+        if (nodeQueue == null || nodeQueue.isBlank()) {
+            return;
+        }
+        redisTemplate.opsForValue().set(key(userId), nodeQueue, ttl);
     }
 
     @Override

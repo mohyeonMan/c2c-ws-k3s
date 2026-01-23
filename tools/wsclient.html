@@ -74,6 +74,8 @@
         background: #0b0f13;
         white-space: pre-wrap;
         min-height: 80px;
+        max-height: 260px;
+        overflow: auto;
       }
     </style>
   </head>
@@ -94,15 +96,13 @@
       </div>
     </div>
 
-    <div class="row inline">
-      <div>
-        <label for="action">Action</label>
-        <input id="action" type="text" value="CLIENT_MESSAGE" />
-      </div>
-      <div>
-        <label for="payload">Payload (string)</label>
-        <input id="payload" type="text" value="hello" />
-      </div>
+    <div class="row">
+      <label for="frameJson">Frame JSON (client frame)</label>
+      <textarea id="frameJson"></textarea>
+    </div>
+    <div class="row">
+      <label for="payloadJson">Payload JSON (embedded in frame)</label>
+      <textarea id="payloadJson"></textarea>
     </div>
 
     <div class="row">
@@ -119,8 +119,8 @@
       const urlInput = document.getElementById("url");
       const userIdInput = document.getElementById("userId");
       const heartbeatInput = document.getElementById("heartbeat");
-      const actionInput = document.getElementById("action");
-      const payloadInput = document.getElementById("payload");
+      const frameJsonInput = document.getElementById("frameJson");
+      const payloadJsonInput = document.getElementById("payloadJson");
       const connectBtn = document.getElementById("connect");
       const disconnectBtn = document.getElementById("disconnect");
       const sendBtn = document.getElementById("send");
@@ -129,8 +129,19 @@
       let socket = null;
       let heartbeatTimer = null;
 
-      const log = (text) => {
-        logEl.textContent = text;
+      const sampleFrame = {
+        requestId: "req-123",
+        type: "COMMAND",
+        action: "CLIENT_MESSAGE",
+      };
+      const samplePayload = {
+        message: "hello",
+      };
+
+      const appendLog = (text) => {
+        const line = document.createElement("div");
+        line.textContent = text;
+        logEl.appendChild(line);
       };
 
       const buildUrl = () => {
@@ -169,27 +180,27 @@
       connectBtn.addEventListener("click", () => {
         const url = buildUrl();
         if (!url) {
-          log("URL required.");
+          appendLog("URL required.");
           return;
         }
         if (socket && socket.readyState === WebSocket.OPEN) {
-          log("Already connected.");
+          appendLog("Already connected.");
           return;
         }
         socket = new WebSocket(url);
         socket.onopen = () => {
-          log(`Connected: ${url}`);
+          appendLog(`Connected: ${url}`);
           startHeartbeat();
         };
         socket.onmessage = (event) => {
-          log(`Recv: ${event.data}`);
+          appendLog(`Recv: ${event.data}`);
         };
         socket.onerror = () => {
-          log("WebSocket error.");
+          appendLog("WebSocket error.");
         };
         socket.onclose = (event) => {
           stopHeartbeat();
-          log(`Closed: ${event.code} ${event.reason || ""}`.trim());
+          appendLog(`Closed: ${event.code} ${event.reason || ""}`.trim());
         };
       });
 
@@ -201,20 +212,43 @@
 
       sendBtn.addEventListener("click", () => {
         if (!socket || socket.readyState !== WebSocket.OPEN) {
-          log("Socket not connected.");
+          appendLog("Socket not connected.");
           return;
         }
-        const action = actionInput.value.trim() || "CLIENT_MESSAGE";
-        const payload = payloadInput.value;
-        const frame = {
-          requestId: `req-${Date.now()}`,
-          type: "COMMAND",
-          action,
-          payload,
-        };
-        socket.send(JSON.stringify(frame));
-        log(`Sent: ${JSON.stringify(frame)}`);
+        const raw = frameJsonInput.value.trim();
+        if (!raw) {
+          appendLog("Frame JSON required.");
+          return;
+        }
+        let frame;
+        try {
+          frame = JSON.parse(raw);
+        } catch (e) {
+          appendLog("Frame JSON parse error.");
+          return;
+        }
+        if (!frame.type) {
+          frame.type = "COMMAND";
+        }
+        const payloadRaw = payloadJsonInput.value.trim();
+        if (payloadRaw) {
+          try {
+            const payloadObj = JSON.parse(payloadRaw);
+            frame.payload = JSON.stringify(payloadObj);
+          } catch (e) {
+            appendLog("Payload JSON parse error.");
+            return;
+          }
+        } else {
+          delete frame.payload;
+        }
+        const outbound = JSON.stringify(frame);
+        socket.send(outbound);
+        appendLog(`Sent: ${outbound}`);
       });
+
+      frameJsonInput.value = JSON.stringify(sampleFrame, null, 2);
+      payloadJsonInput.value = JSON.stringify(samplePayload, null, 2);
     </script>
   </body>
 </html>

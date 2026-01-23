@@ -3,6 +3,7 @@ package com.c2c.ws.application.service.session;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.c2c.ws.application.port.in.ws.session.SessionLifecycleUseCase;
 import com.c2c.ws.application.port.out.presence.SessionPresencePort;
@@ -20,6 +21,8 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     private final SessionPresencePort sessionPresencePort;
     private final SessionRegistry registry;
     private final SessionUserIdResolver userIdResolver;
+    @Value("${c2c.mq.event.queue}")
+    private String nodeQueueName;
 
     @Override
     public Conn onOpen(WebSocketSession session) {
@@ -29,7 +32,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
         }
 
         Conn conn = registry.register(userId, session);
-        sessionPresencePort.markSessionActive(userId);
+        sessionPresencePort.markSessionActive(userId, nodeQueueName);
         userIdResolver.store(session, userId);
 
         log.info("USER CONNECTED : {}", userId);
@@ -65,7 +68,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
         if(!registry.touch(userId)){
             throw new RuntimeException("CLOSED CONN");
         }
-        sessionPresencePort.markSessionActive(userId);
+        sessionPresencePort.markSessionActive(userId, nodeQueueName);
     }
 
 }
