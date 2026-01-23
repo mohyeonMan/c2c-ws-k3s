@@ -1,4 +1,4 @@
-package com.c2c.ws.application.service;
+package com.c2c.ws.application.service.frame;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -7,21 +7,21 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
-import com.c2c.ws.adapter.in.ws.dto.ClientFrame;
-import com.c2c.ws.adapter.in.ws.dto.FrameType;
-import com.c2c.ws.application.port.in.ws.FrameDispatcherUseCase;
-import com.c2c.ws.application.port.in.ws.FrameHandler;
+import com.c2c.ws.adapter.in.ws.dto.CFrame;
+import com.c2c.ws.adapter.in.ws.dto.CFrameType;
+import com.c2c.ws.application.port.in.ws.frame.FrameDispatcherUseCase;
+import com.c2c.ws.application.port.in.ws.frame.FrameHandler;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class FrameDispatcher implements FrameDispatcherUseCase {
-    private final Map<FrameType, FrameHandler> frameHandlerMap;
+    private final Map<CFrameType, FrameHandler> frameHandlerMap;
 
     public FrameDispatcher(List<FrameHandler> handlers) {
         Objects.requireNonNull(handlers, "handlers");
-        Map<FrameType, FrameHandler> mapped = new EnumMap<>(FrameType.class);
+        Map<CFrameType, FrameHandler> mapped = new EnumMap<>(CFrameType.class);
         for (FrameHandler handler : handlers) {
             if (handler == null || handler.supports() == null) {
                 continue;
@@ -33,14 +33,14 @@ public class FrameDispatcher implements FrameDispatcherUseCase {
 
 
     @Override
-    public void dispatchFrame(ClientFrame frame) {
+    public void dispatchFrame(String userId, CFrame frame) {
         if (frame == null || frame.getType() == null) {
             log.warn("Frame or frame type is null.");
             return;
         }
         FrameHandler handler = frameHandlerMap.get(frame.getType());
         if (handler != null) {
-            handler.process(frame);
+            handler.handle(userId, frame);
         } else {
             log.warn("No handler found for frame type: {}", frame.getType());
         }

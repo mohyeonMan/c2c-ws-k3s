@@ -4,9 +4,11 @@ import java.time.Instant;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @Builder
+@ToString
 public class Command {
     private final String commandId;
     private final String requestId;

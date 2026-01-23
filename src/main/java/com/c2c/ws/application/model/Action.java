@@ -1,6 +1,5 @@
 package com.c2c.ws.application.model;
 
-import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 
 public enum Action {
     CONN_CLOSED,
