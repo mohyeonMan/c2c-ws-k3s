@@ -4,8 +4,6 @@ import org.springframework.stereotype.Service;
 
 import com.c2c.ws.adapter.out.ws.dto.SFrame;
 import com.c2c.ws.adapter.out.ws.dto.SFrameType;
-import com.c2c.ws.adapter.out.ws.dto.Status;
-import com.c2c.ws.application.model.Action;
 import com.c2c.ws.application.model.Event;
 import com.c2c.ws.application.port.in.mq.EventHandler;
 import com.c2c.ws.application.port.out.ws.SendToSessionPort;

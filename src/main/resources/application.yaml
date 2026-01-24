@@ -37,6 +37,16 @@ logging:
   pattern:
     console: "%d{HH:mm:ss}%-5level[%thread]%logger{0}:: %msg%n"
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
 ws:
   node-id: ${WS_NODE_ID:${HOSTNAME:${random.uuid}}}
   node-presence:
