@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 public enum CFrameType {
     ACK,
     COMMAND,
+    SYSTEM,
     @JsonEnumDefaultValue
     UNKNOWN;
 

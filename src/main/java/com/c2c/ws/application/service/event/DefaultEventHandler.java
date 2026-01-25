@@ -1,4 +1,4 @@
-package com.c2c.ws.application.service.mq;
+package com.c2c.ws.application.service.event;
 
 import org.springframework.stereotype.Service;
 

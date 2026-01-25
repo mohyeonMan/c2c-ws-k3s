@@ -1,5 +1,7 @@
 package com.c2c.ws.adapter.in.ws;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -7,10 +9,13 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.c2c.ws.adapter.in.ws.dto.CFrame;
+import com.c2c.ws.adapter.in.ws.dto.CFrameType;
+import com.c2c.ws.application.model.Action;
 import com.c2c.ws.application.port.in.ws.frame.FrameDispatcherUseCase;
 import com.c2c.ws.application.port.in.ws.session.SessionLifecycleUseCase;
 import com.c2c.ws.application.service.session.SessionUserIdResolver;
 import com.c2c.ws.common.util.CommonMapper;
+import com.c2c.ws.common.util.IdGenerator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +46,18 @@ public class WsMessageHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        String userId = sessionUserIdResolver.resolve(session);
+        CFrame frame = CFrame.builder()
+                .requestId(IdGenerator.generateId("sys-req"))
+                .type(CFrameType.SYSTEM)
+                .action(Action.CONN_CLOSED)
+                .payload(commonMapper.write(Map.of(
+                        "code", status.getCode(),
+                        "reason", status.getReason()
+                )))
+                .build();
+        frameDispatcherUseCase.dispatchFrame(userId, frame);
         sessionLifecycleUseCase.onClose(session);
+
     }
 }
