@@ -1,11 +1,11 @@
-package com.c2c.ws.adapter.out.ws.dto;
+package com.c2c.ws.application.model;
 
 import java.util.Locale;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 
-public enum SFrameType {
+public enum EventType {
     ACK,
     RESULT,
     SYSTEM,
@@ -17,12 +17,12 @@ public enum SFrameType {
     UNKNOWN;
 
     @JsonCreator
-    public static SFrameType from(String value) {
+    public static EventType from(String value) {
         if (value == null) {
             return UNKNOWN;
         }
         try {
-            return SFrameType.valueOf(value.toUpperCase(Locale.ROOT));
+            return EventType.valueOf(value.toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return UNKNOWN;
         }

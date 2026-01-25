@@ -4,12 +4,13 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 import com.c2c.ws.adapter.in.mq.dto.EventDto;
-import com.c2c.ws.adapter.out.ws.dto.SFrameType;
-import com.c2c.ws.adapter.out.ws.dto.Status;
 import com.c2c.ws.application.model.Action;
 import com.c2c.ws.application.model.Event;
+import com.c2c.ws.application.model.EventType;
+import com.c2c.ws.application.model.Status;
 import com.c2c.ws.application.port.in.mq.ConsumeEventPort;
 import com.c2c.ws.application.port.in.mq.EventHandler;
+import com.c2c.ws.common.util.TimeFormat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
             return;
         }
 
-        SFrameType type = SFrameType.from(eventDto.getType());
+        EventType type = EventType.from(eventDto.getType());
         Status status = Status.from(eventDto.getStatus());
         Action action = Action.from(eventDto.getAction());
 
@@ -41,6 +42,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
                 .action(action)
                 .status(status)
                 .payload(eventDto.getPayload())
+                .sentAt(TimeFormat.parse(eventDto.getSentAt()))
                 .build();
         eventHandler.handle(event);
     }

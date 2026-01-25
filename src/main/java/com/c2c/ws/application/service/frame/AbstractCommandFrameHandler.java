@@ -3,8 +3,8 @@ package com.c2c.ws.application.service.frame;
 
 import com.c2c.ws.adapter.in.ws.dto.CFrame;
 import com.c2c.ws.adapter.out.ws.dto.SFrame;
-import com.c2c.ws.adapter.out.ws.dto.SFrameType;
-import com.c2c.ws.adapter.out.ws.dto.Status;
+import com.c2c.ws.application.model.EventType;
+import com.c2c.ws.application.model.Status;
 import com.c2c.ws.application.port.in.ws.frame.FrameHandler;
 import com.c2c.ws.application.port.out.ws.SendToSessionPort;
 import com.c2c.ws.common.util.CommonMapper;
@@ -50,16 +50,16 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
             Status status,
             String payload
     ) {
-        return buildServerFrame(frame, SFrameType.RESULT, status, payload);
+        return buildServerFrame(frame, EventType.RESULT, status, payload);
     }
 
     protected SFrame buildAck(CFrame frame){
-        return buildServerFrame(frame, SFrameType.ACK, Status.DELIVERED);
+        return buildServerFrame(frame, EventType.ACK, Status.DELIVERED);
     }
 
     protected SFrame buildServerFrame(
             CFrame frame,
-            SFrameType type,
+            EventType type,
             Status status
     ) {
         return buildServerFrame(frame, type, status, null);
@@ -67,7 +67,7 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
 
     protected SFrame buildServerFrame(
             CFrame frame,
-            SFrameType type,
+            EventType type,
             Status status,
             Object payload
     ) {

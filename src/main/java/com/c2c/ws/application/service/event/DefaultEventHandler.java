@@ -3,8 +3,8 @@ package com.c2c.ws.application.service.event;
 import org.springframework.stereotype.Service;
 
 import com.c2c.ws.adapter.out.ws.dto.SFrame;
-import com.c2c.ws.adapter.out.ws.dto.SFrameType;
 import com.c2c.ws.application.model.Event;
+import com.c2c.ws.application.model.EventType;
 import com.c2c.ws.application.port.in.mq.EventHandler;
 import com.c2c.ws.application.port.out.ws.SendToSessionPort;
 import com.c2c.ws.common.util.IdGenerator;
@@ -25,7 +25,7 @@ public class DefaultEventHandler implements EventHandler {
             log.warn("event is null");
             return;
         }
-        if (event.getType() == null || event.getType() == SFrameType.UNKNOWN) {
+        if (event.getType() == null || event.getType() == EventType.UNKNOWN) {
             log.warn("event type unknown: {}", event);
             return;
         }

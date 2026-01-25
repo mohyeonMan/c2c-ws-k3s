@@ -1,4 +1,4 @@
-package com.c2c.ws.adapter.out.ws.dto;
+package com.c2c.ws.application.model;
 
 import java.util.Locale;
 

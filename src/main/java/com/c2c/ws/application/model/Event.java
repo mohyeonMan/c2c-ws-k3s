@@ -1,7 +1,6 @@
 package com.c2c.ws.application.model;
 
-import com.c2c.ws.adapter.out.ws.dto.SFrameType;
-import com.c2c.ws.adapter.out.ws.dto.Status;
+import java.time.Instant;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -15,8 +14,9 @@ public class Event {
     private final String frameId;
     private final String userId;
     private final String eventId;
-    private final SFrameType type;
+    private final EventType type;
     private final Action action;
     private final String payload;
     private final Status status;
+    private final Instant sentAt;
 }

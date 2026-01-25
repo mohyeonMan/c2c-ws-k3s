@@ -21,8 +21,8 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     private final SessionPresencePort sessionPresencePort;
     private final SessionRegistry registry;
     private final SessionUserIdResolver userIdResolver;
-    @Value("${c2c.mq.event.queue}")
-    private String nodeQueueName;
+    @Value("${c2c.mq.event.routing-key}")
+    private String nodeRoutingKey;
 
     @Override
     public Conn onOpen(WebSocketSession session) {
@@ -32,7 +32,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
         }
 
         Conn conn = registry.register(userId, session);
-        sessionPresencePort.markSessionActive(userId, nodeQueueName);
+        sessionPresencePort.markSessionActive(userId, nodeRoutingKey);
         userIdResolver.store(session, userId);
 
         log.info("USER CONNECTED : {}", userId);
@@ -68,7 +68,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
         if(!registry.touch(userId)){
             throw new RuntimeException("CLOSED CONN");
         }
-        sessionPresencePort.markSessionActive(userId, nodeQueueName);
+        sessionPresencePort.markSessionActive(userId, nodeRoutingKey);
     }
 
 }

@@ -22,4 +22,5 @@ public class EventDto {
     private String action;
     private String payload;
     private String status;
+    private String sentAt;
 }
