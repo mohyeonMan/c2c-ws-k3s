@@ -35,7 +35,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
 
         Event event = Event.builder()
                 .requestId(eventDto.getRequestId())
-                .frameId(eventDto.getFrameId())
+                .commandId(eventDto.getCommandId())
                 .userId(eventDto.getUserId())
                 .eventId(eventDto.getEventId())
                 .type(type)

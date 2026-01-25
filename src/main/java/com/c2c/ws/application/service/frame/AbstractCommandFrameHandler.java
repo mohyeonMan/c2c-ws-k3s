@@ -73,7 +73,7 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
     ) {
         SFrame serverFrame = SFrame.builder()
                 .requestId(frame.getRequestId())
-                .frameId(IdGenerator.generateId("sf"))
+                .resId(IdGenerator.generateId("sf"))
                 .type(type)
                 .status(status)
                 .payload(commonMapper.write(payload))

@@ -40,7 +40,7 @@ public class DefaultEventHandler implements EventHandler {
 
         SFrame frame = SFrame.builder()
                 .requestId(event.getRequestId())
-                .frameId(event.getFrameId() != null ? event.getFrameId() : IdGenerator.generateId("sf"))
+                .resId(IdGenerator.generateId("res"))
                 .eventId(event.getEventId())
                 .type(event.getType())
                 .action(event.getAction())

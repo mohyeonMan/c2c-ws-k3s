@@ -14,7 +14,7 @@ import lombok.ToString;
 public class SFrame {
 
     private String requestId;
-    private String frameId;
+    private String resId;
     private String eventId;
     private EventType type;
     private Action action;
