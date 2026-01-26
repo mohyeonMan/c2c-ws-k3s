@@ -21,7 +21,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     private final SessionPresencePort sessionPresencePort;
     private final SessionRegistry registry;
     private final SessionUserIdResolver userIdResolver;
-    @Value("${c2c.mq.event.routing-key}")
+    @Value("${ws.mq.event.routing-key}")
     private String nodeRoutingKey;
 
     @Override

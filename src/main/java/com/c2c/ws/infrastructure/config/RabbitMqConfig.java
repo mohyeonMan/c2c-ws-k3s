@@ -50,9 +50,9 @@ public class RabbitMqConfig {
 
     @Bean
     public Declarables eventMqDeclarables(
-            @Value("${c2c.mq.event.exchange}") String exchangeName,
-            @Value("${c2c.mq.event.queue}") String queueName,
-            @Value("${c2c.mq.event.routing-key}") String routingKey
+            @Value("${ws.mq.event.exchange}") String exchangeName,
+            @Value("${ws.mq.event.queue}") String queueName,
+            @Value("${ws.mq.event.routing-key}") String routingKey
     ) {
         TopicExchange exchange = new TopicExchange(exchangeName, true, false);
         Queue queue = new Queue(queueName, true, false, true);

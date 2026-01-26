@@ -22,7 +22,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
     private final EventHandler eventHandler;
 
     @Override
-    @RabbitListener(queues = "${c2c.mq.event.queue}")
+    @RabbitListener(queues = "${ws.mq.event.queue}")
     public void onEvent(EventDto eventDto) {
         if (eventDto == null) {
             log.warn("event is null");

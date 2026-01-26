@@ -25,10 +25,6 @@ c2c:
       exchange: ${C2C_MQ_ACK_EXCHANGE:c2c.ack}
       queue: ${C2C_MQ_ACK_QUEUE:c2c.ack.queue}
       routing-key: ${C2C_MQ_ACK_ROUTING_KEY:ack.ack}
-    event:
-      exchange: ${C2C_MQ_EVENT_EXCHANGE:c2c.event}
-      queue: ${C2C_MQ_EVENT_QUEUE:c2c.event.queue}.${ws.node-id}
-      routing-key: ${C2C_MQ_EVENT_ROUTING_KEY:c2c.event.route}.${ws.node-id}
     listener:
       core-pool-size: ${C2C_MQ_LISTENER_CORE_POOL_SIZE:2}
       max-pool-size: ${C2C_MQ_LISTENER_MAX_POOL_SIZE:8}
@@ -52,3 +48,8 @@ ws:
   node-presence:
     ttl-seconds: ${WS_NODE_PRESENCE_TTL_SECONDS:30}
     heartbeat-ms: ${WS_NODE_PRESENCE_HEARTBEAT_MS:10000}
+  mq:
+    event:
+      exchange: ${C2C_MQ_EVENT_EXCHANGE:c2c.event}
+      queue: ${C2C_MQ_EVENT_QUEUE:c2c.event.queue}.${ws.node-id}
+      routing-key: ${C2C_MQ_EVENT_ROUTING_KEY:c2c.event.route}.${ws.node-id}
