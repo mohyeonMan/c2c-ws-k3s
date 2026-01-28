@@ -40,6 +40,12 @@
           <div>
             <h1 id="roomTitle">Room</h1>
             <p class="muted" id="roomMeta">Connected</p>
+            <div class="entries-wrap" id="entriesWrap">
+              <button class="entries-trigger" id="entriesBtn" type="button">Entries</button>
+              <div class="entries-panel" id="entriesPanel">
+                <ul class="entries-list" id="entriesList"></ul>
+              </div>
+            </div>
           </div>
           <button class="pill" id="backToHomeBtn">Back</button>
         </header>
@@ -101,6 +107,33 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="joinApproveModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Join Request</h3>
+          <button class="icon-btn" id="closeJoinApproveBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="muted" id="joinApproveText">새로운 참여 요청이 있습니다.</p>
+        <div class="actions">
+          <button class="btn primary" id="approveJoinBtn">Approve</button>
+          <button class="btn" id="denyJoinBtn">Deny</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="systemModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Notice</h3>
+          <button class="icon-btn" id="closeSystemModalBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="muted" id="systemModalText">알림</p>
+        <div class="actions">
+          <button class="btn primary" id="confirmSystemModalBtn">닫기</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const createRoomBtn = document.getElementById("createRoomBtn");
       const homeView = document.getElementById("homeView");
@@ -111,6 +144,9 @@
       const chatWindow = document.getElementById("chatWindow");
       const chatComposer = document.getElementById("chatComposer");
       const chatInput = document.getElementById("chatInput");
+      const entriesWrap = document.getElementById("entriesWrap");
+      const entriesBtn = document.getElementById("entriesBtn");
+      const entriesList = document.getElementById("entriesList");
       const createRoomModal = document.getElementById("createRoomModal");
       const closeModalBtn = document.getElementById("closeModalBtn");
       const cancelCreateBtn = document.getElementById("cancelCreateBtn");
@@ -125,12 +161,22 @@
       const joinRoomIdInput = document.getElementById("joinRoomIdInput");
       const joinProgressModal = document.getElementById("joinProgressModal");
       const joinProgressText = document.getElementById("joinProgressText");
+      const joinApproveModal = document.getElementById("joinApproveModal");
+      const joinApproveText = document.getElementById("joinApproveText");
+      const closeJoinApproveBtn = document.getElementById("closeJoinApproveBtn");
+      const approveJoinBtn = document.getElementById("approveJoinBtn");
+      const denyJoinBtn = document.getElementById("denyJoinBtn");
+      const systemModal = document.getElementById("systemModal");
+      const systemModalText = document.getElementById("systemModalText");
+      const closeSystemModalBtn = document.getElementById("closeSystemModalBtn");
+      const confirmSystemModalBtn = document.getElementById("confirmSystemModalBtn");
       let joinState = {
         nickname: "",
         roomId: "",
         requestId: "",
         acked: false,
         approved: false,
+        joinRequestId: "",
       };
       let createState = {
         nickname: "",
@@ -139,6 +185,10 @@
       };
       let currentRoomId = "";
       let currentNickname = "";
+      let currentUserId = "";
+      let currentOwnerId = "";
+      let currentEntries = [];
+      let pendingJoinRequest = null;
 
       const openModal = () => {
         createRoomModal.setAttribute("aria-hidden", "false");
@@ -180,17 +230,114 @@
         joinProgressModal.classList.remove("open");
       };
 
-      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const showJoinStatusOnHome = (message) => {
+        if (chatView.classList.contains("hidden")) {
+          openJoinProgress(message);
+        } else {
+          appendSystemMessage(message);
+        }
+      };
 
-      // TODO: implement WS send logic later
-      const sendJoinRequest = async () => {};
-      const sendJoin = async () => {};
-      const sendRoomCreate = async () => {};
+      const openJoinApproveModal = (payload) => {
+        pendingJoinRequest = payload;
+        const name = payload.nickname || payload.requestedUserId || "someone";
+        joinApproveText.textContent = `${name} 님이 참여를 요청했습니다.`;
+        joinApproveModal.setAttribute("aria-hidden", "false");
+        joinApproveModal.classList.add("open");
+      };
+
+      const closeJoinApproveModal = () => {
+        joinApproveModal.setAttribute("aria-hidden", "true");
+        joinApproveModal.classList.remove("open");
+        pendingJoinRequest = null;
+      };
+
+      const openSystemModal = (message) => {
+        systemModalText.textContent = message;
+        systemModal.setAttribute("aria-hidden", "false");
+        systemModal.classList.add("open");
+      };
+
+      const closeSystemModal = () => {
+        systemModal.setAttribute("aria-hidden", "true");
+        systemModal.classList.remove("open");
+      };
+
+      const sendCommand = (action, payload) => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          appendSystemMessage("연결이 끊어졌습니다.");
+          return null;
+        }
+        const frame = {
+          requestId: `req-${Date.now()}`,
+          type: "COMMAND",
+          action,
+          payload: payload ? JSON.stringify(payload) : null,
+        };
+        socket.send(JSON.stringify(frame));
+        return frame.requestId;
+      };
+
+      const sendAckFrame = (eventId) => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+        const frame = {
+          requestId: `ack-${Date.now()}`,
+          eventId,
+          type: "ACK",
+        };
+        socket.send(JSON.stringify(frame));
+      };
+
+      const sendJoinRequest = async () => {
+        const requestId = sendCommand("JOIN_REQUEST", {
+          roomId: joinState.roomId,
+          nickName: joinState.nickname,
+        });
+        if (requestId) {
+          joinState.requestId = requestId;
+        }
+      };
+
+      const sendJoin = async (roomId, nickname) => {
+        const requestId = sendCommand("JOIN", {
+          roomId,
+          nickName: nickname,
+        });
+        if (requestId) {
+          joinState.roomId = roomId;
+          joinState.nickname = nickname;
+          joinState.joinRequestId = requestId;
+        }
+      };
+
+      const sendJoinApprove = async (roomId, requestedUserId, approved) => {
+        sendCommand("JOIN_APPROVE", {
+          roomId,
+          requestedUserId,
+          approved,
+        });
+      };
+
+      const sendRoomCreate = async () => {
+        const requestId = sendCommand("ROOM_CREATE", null);
+        if (requestId) {
+          createState.requestId = requestId;
+        }
+      };
 
       const wsBaseUrl = "ws://jhhomehub.gonetis.com/ws";
 
       let socket = null;
       let heartbeatTimer = null;
+      let heartbeatAckTimer = null;
+      let heartbeatRequestId = "";
+      let reconnectTimer = null;
+      let reconnecting = false;
+      const HEARTBEAT_INTERVAL_MS = 10000;
+      const HEARTBEAT_ACK_TIMEOUT_MS = 7000;
+      const RECONNECT_DELAY_MS = 500;
 
       const startHeartbeat = () => {
         stopHeartbeat();
@@ -204,14 +351,51 @@
             action: "HEARTBEAT",
             payload: "",
           };
+          heartbeatRequestId = frame.requestId;
           socket.send(JSON.stringify(frame));
-        }, 10000);
+          armHeartbeatTimeout();
+        }, HEARTBEAT_INTERVAL_MS);
       };
 
       const stopHeartbeat = () => {
         if (heartbeatTimer) {
           clearInterval(heartbeatTimer);
           heartbeatTimer = null;
+        }
+        if (heartbeatAckTimer) {
+          clearTimeout(heartbeatAckTimer);
+          heartbeatAckTimer = null;
+        }
+      };
+
+      const armHeartbeatTimeout = () => {
+        if (heartbeatAckTimer) {
+          clearTimeout(heartbeatAckTimer);
+        }
+        heartbeatAckTimer = setTimeout(() => {
+          if (!socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+          }
+          reconnectSocket("heartbeat timeout");
+        }, HEARTBEAT_ACK_TIMEOUT_MS);
+      };
+
+      const reconnectSocket = (reason) => {
+        if (reconnecting) return;
+        reconnecting = true;
+        stopHeartbeat();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer);
+        }
+        reconnectTimer = setTimeout(() => {
+          reconnecting = false;
+          connectSocket();
+        }, RECONNECT_DELAY_MS);
+        if (roomMeta) {
+          roomMeta.textContent = `Reconnecting (${reason})`;
         }
       };
 
@@ -249,11 +433,48 @@
       };
 
       const appendSystemMessage = (text) => {
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
-        bubble.innerHTML = `<div class="meta">system</div><p>${text}</p>`;
-        chatWindow.appendChild(bubble);
+        const notice = document.createElement("div");
+        notice.className = "system-message";
+        notice.textContent = text;
+        chatWindow.appendChild(notice);
         chatWindow.scrollTop = chatWindow.scrollHeight;
+      };
+
+      const updateEntriesUI = () => {
+        if (!entriesWrap || !entriesBtn || !entriesList) {
+          return;
+        }
+        const count = currentEntries.length;
+        entriesBtn.textContent = `Entries (${count})`;
+        entriesList.innerHTML = "";
+        if (!count) {
+          const empty = document.createElement("li");
+          empty.className = "entries-item muted";
+          empty.textContent = "No participants";
+          entriesList.appendChild(empty);
+          return;
+        }
+        currentEntries.forEach((entry) => {
+          const item = document.createElement("li");
+          item.className = "entries-item";
+          const isOwner = currentOwnerId && entry.userId === currentOwnerId;
+          const isSelf = currentUserId && entry.userId === currentUserId;
+          if (isOwner) {
+            item.classList.add("is-owner");
+          }
+          if (isSelf) {
+            item.classList.add("is-self");
+          }
+          const name = entry.nickname || entry.userId || "user";
+          item.textContent = name;
+          if (isOwner) {
+            const badge = document.createElement("span");
+            badge.className = "owner-badge";
+            badge.textContent = "owner";
+            item.appendChild(badge);
+          }
+          entriesList.appendChild(item);
+        });
       };
 
       const appendMessage = (text, sender, isSelf) => {
@@ -264,11 +485,183 @@
         chatWindow.scrollTop = chatWindow.scrollHeight;
       };
 
+      const parsePayload = (raw) => {
+        if (!raw) return null;
+        if (typeof raw === "object") return raw;
+        if (typeof raw !== "string") return null;
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return null;
+        }
+      };
+
+      const handleAck = (message) => {
+        if (message.requestId && message.requestId === heartbeatRequestId) {
+          if (heartbeatAckTimer) {
+            clearTimeout(heartbeatAckTimer);
+            heartbeatAckTimer = null;
+          }
+          return;
+        }
+        if (message.action === "ROOM_CREATE" && message.requestId === createState.requestId) {
+          updateJoinProgress("방 생성 요청 수신됨...");
+          return;
+        }
+        if (message.action === "JOIN_REQUEST" && message.requestId === joinState.requestId) {
+          updateJoinProgress("승인을 기다리고 있습니다...");
+          return;
+        }
+        if (message.action === "JOIN" && message.requestId === joinState.joinRequestId) {
+          updateJoinProgress("참여 처리 중...");
+        }
+      };
+
+      const handleResult = (message) => {
+        const payload = parsePayload(message.payload);
+
+        if (message.action === "ROOM_CREATE") {
+          if (message.status === "ERROR") {
+            updateJoinProgress("방 생성 실패.");
+            closeJoinProgress();
+            return;
+          }
+          const roomId = payload?.roomId;
+          const ownerId = payload?.ownerId;
+          if (roomId) {
+            createState.roomId = roomId;
+          }
+          if (ownerId) {
+            currentOwnerId = ownerId;
+          }
+          updateJoinProgress("방 생성 완료. 참여 처리 중...");
+          sendJoin(createState.roomId, createState.nickname);
+          return;
+        }
+
+        if (message.action === "JOIN") {
+          if (message.status === "ERROR") {
+            updateJoinProgress("참여 실패.");
+            closeJoinProgress();
+            return;
+          }
+          const roomId = payload?.roomId || joinState.roomId;
+          const ownerId = payload?.ownerId;
+          const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+          if (ownerId) {
+            currentOwnerId = ownerId;
+          }
+          if (entries.length) {
+            currentEntries = entries;
+          }
+          closeJoinProgress();
+          enterRoom(roomId, joinState.nickname || createState.nickname);
+          updateEntriesUI();
+          return;
+        }
+
+        if (message.action === "JOIN_REQUEST") {
+          if (message.status === "ERROR") {
+            updateJoinProgress("승인 요청 실패.");
+            closeJoinProgress();
+          }
+          return;
+        }
+      };
+
+      const handleNotify = (message) => {
+        const payload = parsePayload(message.payload);
+        if (!payload) return;
+
+        if (message.action === "JOIN") {
+          appendSystemMessage(`${payload.nickname || payload.userId} joined.`);
+          if (payload.userId) {
+            const exists = currentEntries.some(
+              (entry) => entry.userId === payload.userId
+            );
+            if (!exists) {
+              currentEntries = [
+                ...currentEntries,
+                { userId: payload.userId, nickname: payload.nickname || "" },
+              ];
+            }
+            updateEntriesUI();
+          }
+          return;
+        }
+
+        if (message.action === "LEAVE") {
+          appendSystemMessage(`${payload.nickname || payload.userId} left.`);
+          if (payload.newOwnerId) {
+            currentOwnerId = payload.newOwnerId;
+          }
+          if (payload.userId) {
+            currentEntries = currentEntries.filter(
+              (entry) => entry.userId !== payload.userId
+            );
+          }
+          updateEntriesUI();
+          return;
+        }
+
+        if (message.action === "JOIN_REQUEST") {
+          if (
+            currentUserId &&
+            currentOwnerId &&
+            currentUserId === currentOwnerId &&
+            payload.roomId === currentRoomId
+          ) {
+            openJoinApproveModal(payload);
+          }
+          return;
+        }
+
+        if (message.action === "JOIN_APPROVE") {
+          if (payload.requestedUserId && payload.requestedUserId !== currentUserId) {
+            return;
+          }
+          if (payload.approved) {
+            showJoinStatusOnHome("참여 요청이 승인되었습니다.");
+            sendJoin(payload.roomId, joinState.nickname);
+          } else {
+            closeJoinProgress();
+            openSystemModal("참여가 거부되었습니다.");
+          }
+        }
+      };
+
       const handleSocketMessage = (data) => {
         let message;
         try {
           message = JSON.parse(data);
         } catch (e) {
+          return;
+        }
+
+        if (message.type !== "ACK" && message.eventId) {
+          sendAckFrame(message.eventId);
+        }
+
+        if (message.type === "SYSTEM" && message.action === "CONN_OPENED") {
+          const payload = parsePayload(message.payload);
+          if (payload?.userId) {
+            currentUserId = payload.userId;
+          }
+          return;
+        }
+
+        if (message.type === "ACK") {
+          handleAck(message);
+          return;
+        }
+
+        if (message.type === "RESULT") {
+          handleResult(message);
+          return;
+        }
+
+        if (message.type === "NOTIFY") {
+          handleNotify(message);
           return;
         }
 
@@ -287,31 +680,6 @@
           return;
         }
 
-        if (message.type === "NOTIFY" && message.action === "JOIN") {
-          let payload = null;
-          try {
-            payload = message.payload ? JSON.parse(message.payload) : null;
-          } catch (e) {
-            payload = null;
-          }
-          if (payload) {
-            appendSystemMessage(`${payload.nickname || payload.userId} joined.`);
-          }
-          return;
-        }
-
-        if (message.type === "NOTIFY" && message.action === "LEAVE") {
-          let payload = null;
-          try {
-            payload = message.payload ? JSON.parse(message.payload) : null;
-          } catch (e) {
-            payload = null;
-          }
-          if (payload) {
-            appendSystemMessage(`${payload.nickname || payload.userId} left.`);
-          }
-          return;
-        }
       };
 
       const enterRoom = (roomId, nickname) => {
@@ -322,11 +690,17 @@
         chatWindow.innerHTML = "";
         homeView.classList.add("hidden");
         chatView.classList.remove("hidden");
+        updateEntriesUI();
       };
 
       const exitRoom = () => {
+        if (currentRoomId) {
+          sendCommand("LEAVE", { roomId: currentRoomId });
+        }
         currentRoomId = "";
         currentNickname = "";
+        currentEntries = [];
+        currentOwnerId = "";
         chatInput.value = "";
         chatView.classList.add("hidden");
         homeView.classList.remove("hidden");
@@ -340,23 +714,17 @@
       const runJoinFlow = async () => {
         openJoinProgress("요청을 보내는 중...");
         await sendJoinRequest();
-        updateJoinProgress("승인을 기다리고 있습니다...");
-        await sleep(400);
-        updateJoinProgress("승인 완료. 참여 처리 중...");
-        await sendJoin();
-        await sleep(400);
-        navigateToRoom(joinState.roomId, joinState.nickname);
+        if (!joinState.requestId) {
+          closeJoinProgress();
+        }
       };
 
       const runCreateFlow = async () => {
         openJoinProgress("방을 생성 요청중입니다...");
         await sendRoomCreate();
-        updateJoinProgress("방을 생성하고 있습니다...");
-        await sleep(400);
-        updateJoinProgress("참여 처리 중...");
-        await sendJoin();
-        await sleep(400);
-        navigateToRoom(createState.roomId, createState.nickname);
+        if (!createState.requestId) {
+          closeJoinProgress();
+        }
       };
 
       createRoomBtn.addEventListener("click", openModal);
@@ -376,8 +744,8 @@
         closeModal();
         createState = {
           nickname,
-          roomId: `room-${Date.now()}`,
-          requestId: `req-${Date.now()}`,
+          roomId: "",
+          requestId: "",
         };
         runCreateFlow();
       });
@@ -408,11 +776,45 @@
           requestId: "",
           acked: false,
           approved: false,
+          joinRequestId: "",
         };
         runJoinFlow();
       });
 
       backToHomeBtn.addEventListener("click", exitRoom);
+
+      closeJoinApproveBtn.addEventListener("click", closeJoinApproveModal);
+      joinApproveModal.addEventListener("click", (event) => {
+        if (event.target === joinApproveModal) {
+          closeJoinApproveModal();
+        }
+      });
+      approveJoinBtn.addEventListener("click", () => {
+        if (!pendingJoinRequest) return;
+        sendJoinApprove(
+          pendingJoinRequest.roomId,
+          pendingJoinRequest.requestedUserId,
+          true
+        );
+        closeJoinApproveModal();
+      });
+      denyJoinBtn.addEventListener("click", () => {
+        if (!pendingJoinRequest) return;
+        sendJoinApprove(
+          pendingJoinRequest.roomId,
+          pendingJoinRequest.requestedUserId,
+          false
+        );
+        closeJoinApproveModal();
+      });
+
+      closeSystemModalBtn.addEventListener("click", closeSystemModal);
+      confirmSystemModalBtn.addEventListener("click", closeSystemModal);
+      systemModal.addEventListener("click", (event) => {
+        if (event.target === systemModal) {
+          closeSystemModal();
+        }
+      });
 
       chatComposer.addEventListener("submit", (event) => {
         event.preventDefault();

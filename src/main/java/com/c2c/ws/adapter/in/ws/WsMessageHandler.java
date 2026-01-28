@@ -1,5 +1,6 @@
 package com.c2c.ws.adapter.in.ws;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
@@ -88,13 +89,22 @@ public class WsMessageHandler extends TextWebSocketHandler {
                 .requestId(IdGenerator.generateId("sys-req"))
                 .type(CFrameType.SYSTEM)
                 .action(Action.CONN_CLOSED)
-                .payload(commonMapper.write(Map.of(
-                        "code", status.getCode(),
-                        "reason", status.getReason()
-                )))
+                .payload(commonMapper.write(buildConnClosedPayload(status)))
                 .build();
         frameDispatcherUseCase.dispatchFrame(userId, frame);
         sessionLifecycleUseCase.onClose(session);
 
+    }
+
+    private Map<String, Object> buildConnClosedPayload(CloseStatus status) {
+        Map<String, Object> payload = new HashMap<>();
+        if (status == null) {
+            return payload;
+        }
+        payload.put("code", status.getCode());
+        if (status.getReason() != null) {
+            payload.put("reason", status.getReason());
+        }
+        return payload;
     }
 }
