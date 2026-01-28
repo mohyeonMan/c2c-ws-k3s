@@ -24,7 +24,6 @@ public class HeartbeatCommandHandler implements CommandHandler{
 
     public void handle(Command command) {
         String userId = command.getUserId();
-        log.info("HEARTBEAT={}",userId);
         sessionLifecycleUseCase.touch(userId);
     }
 

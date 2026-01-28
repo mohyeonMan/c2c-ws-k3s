@@ -36,7 +36,14 @@ public class DefaultEventHandler implements EventHandler {
             return;
         }
 
-        log.info("HANDLE EVENT :: {}", event);
+        log.info("handle event: requestId={}, commandId={}, eventId={}, userId={}, type={}, action={}, status={}",
+                event.getRequestId(),
+                event.getCommandId(),
+                event.getEventId(),
+                userId,
+                event.getType(),
+                event.getAction(),
+                event.getStatus());
 
         SFrame frame = SFrame.builder()
                 .requestId(event.getRequestId())
@@ -48,6 +55,7 @@ public class DefaultEventHandler implements EventHandler {
                 .payload(event.getPayload())
                 .build();
 
+        log.debug("send event to session: userId={}, resId={}", userId, frame.getResId());
         sendToSessionPort.sendToSession(userId, frame);
     }
 

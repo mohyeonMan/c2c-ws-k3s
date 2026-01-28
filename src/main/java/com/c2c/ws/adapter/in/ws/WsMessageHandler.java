@@ -36,17 +36,38 @@ public class WsMessageHandler extends TextWebSocketHandler {
         String userId = sessionUserIdResolver.resolve(session);
         CFrame frame = commonMapper.read(message.getPayload(), CFrame.class);
 
+        if (frame == null) {
+            log.warn("WS message parse failed: sessionId={}, userId={}, payloadSize={}",
+                    session.getId(),
+                    userId,
+                    message.getPayloadLength());
+            return;
+        }
+
+        log.info("WS message received: sessionId={}, userId={}, type={}, action={}, requestId={}",
+                session.getId(),
+                userId,
+                frame.getType(),
+                frame.getAction(),
+                frame.getRequestId());
+
         frameDispatcherUseCase.dispatchFrame(userId, frame);
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
+        log.info("WS connection established: sessionId={}", session.getId());
         sessionLifecycleUseCase.onOpen(session);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String userId = sessionUserIdResolver.resolve(session);
+        log.info("WS connection closed: sessionId={}, userId={}, code={}, reason={}",
+                session.getId(),
+                userId,
+                status.getCode(),
+                status.getReason());
         CFrame frame = CFrame.builder()
                 .requestId(IdGenerator.generateId("sys-req"))
                 .type(CFrameType.SYSTEM)

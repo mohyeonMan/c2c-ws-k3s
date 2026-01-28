@@ -31,6 +31,11 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
             userId = IdGenerator.generateId("user");
         }
 
+        log.info("onOpen: sessionId={}, userId={}, routingKey={}",
+                session.getId(),
+                userId,
+                nodeRoutingKey);
+
         Conn conn = registry.register(userId, session);
         sessionPresencePort.markSessionActive(userId, nodeRoutingKey);
         userIdResolver.store(session, userId);
@@ -43,6 +48,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     @Override
     public Conn onClose(WebSocketSession session) {
         if (session == null) {
+            log.warn("onClose: session is null");
             return null;
         }
 
@@ -53,6 +59,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
             return null;
         }
 
+        log.info("onClose: sessionId={}, userId={}", session.getId(), userId);
         Conn conn = registry.find(userId).orElse(null);
         registry.remove(userId);
         sessionPresencePort.markSessionInactive(userId);
@@ -66,8 +73,10 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     @Override
     public void touch(String userId) {
         if(!registry.touch(userId)){
+            log.warn("touch: closed conn userId={}", userId);
             throw new RuntimeException("CLOSED CONN");
         }
+        log.debug("touch: userId={}, routingKey={}", userId, nodeRoutingKey);
         sessionPresencePort.markSessionActive(userId, nodeRoutingKey);
     }
 

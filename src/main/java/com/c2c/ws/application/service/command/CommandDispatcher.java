@@ -8,7 +8,9 @@ import com.c2c.ws.application.port.in.ws.command.CommandDispatcherUseCase;
 import com.c2c.ws.application.port.in.ws.command.CommandHandler;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommandDispatcher implements CommandDispatcherUseCase{
@@ -18,6 +20,11 @@ public class CommandDispatcher implements CommandDispatcherUseCase{
 
     @Override
     public void dispatchCommand(Command command) {
+        if (command == null) {
+            log.warn("dispatchCommand: command is null");
+            return;
+        }
+
         Action action = command.getAction();
         CommandHandler handler; 
 
@@ -33,6 +40,12 @@ public class CommandDispatcher implements CommandDispatcherUseCase{
                 break;
         }
 
+        log.info("dispatchCommand: action={}, commandId={}, requestId={}, userId={}, handler={}",
+                action,
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId(),
+                handler.getClass().getSimpleName());
         handler.handle(command);
     }
 

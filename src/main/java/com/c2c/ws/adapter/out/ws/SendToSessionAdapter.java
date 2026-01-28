@@ -32,6 +32,10 @@ public class SendToSessionAdapter implements SendToSessionPort {
             try {
                 String json = commonMapper.write(serverFrame);
                 session.sendMessage(new TextMessage(json));
+                log.debug("sendToSession: sent userId={}, sessionId={}, resId={}",
+                        userId,
+                        session.getId(),
+                        serverFrame.getResId());
             } catch (Exception e) {
                 log.warn("sendToSession failed: userId={}", userId, e);
             }

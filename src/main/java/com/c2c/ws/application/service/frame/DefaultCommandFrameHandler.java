@@ -38,7 +38,11 @@ public class DefaultCommandFrameHandler extends AbstractCommandFrameHandler {
     @Override
     public void doHandle(String userId, CFrame frame) {
     
-        log.info("handle commandframe :: userId={}, frame={}",userId, frame.toString());
+        log.info("handle command frame: userId={}, type={}, action={}, requestId={}",
+                userId,
+                frame.getType(),
+                frame.getAction(),
+                frame.getRequestId());
 
         Command command = Command.builder()
                 .userId(userId)
@@ -49,6 +53,11 @@ public class DefaultCommandFrameHandler extends AbstractCommandFrameHandler {
                 .sentAt(Instant.now())
                 .build();
 
+        log.debug("command built: commandId={}, requestId={}, userId={}, action={}",
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId(),
+                command.getAction());
         commandDispatcherUseCase.dispatchCommand(command);
 
     }   

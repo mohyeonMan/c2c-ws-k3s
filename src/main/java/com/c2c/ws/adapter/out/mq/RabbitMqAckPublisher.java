@@ -35,6 +35,11 @@ public class RabbitMqAckPublisher implements PublishAckPort {
                 .eventId(ack.getEventId())
                 .sentAt(TimeFormat.format(ack.getSentAt()))
                 .build();
+        log.debug("publishAck: exchange={}, routingKey={}, ackId={}, eventId={}",
+                exchange,
+                routingKey,
+                ack.getAckId(),
+                ack.getEventId());
         rabbitTemplate.convertAndSend(exchange, routingKey, ackDto);
 
     }

@@ -40,6 +40,12 @@ public class RabbitMqCommandPublisher implements PublishCommandPort {
                 .sentAt(TimeFormat.format(command.getSentAt()))
                 .build();
 
+        log.debug("publishCommand: exchange={}, routingKey={}, commandId={}, requestId={}, userId={}",
+                exchange,
+                routingKey,
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId());
         rabbitTemplate.convertAndSend(exchange, routingKey, commandDto);
     }
 }

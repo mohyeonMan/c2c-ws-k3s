@@ -28,7 +28,11 @@ public class FallbackFrameHandler extends AbstractCommandFrameHandler{
     @Override
     public void doHandle(String userId, CFrame frame) {
     
-        log.info("handle fallbackframe :: userId={}, frame={}",userId, frame.toString());
+        log.warn("handle fallback frame: userId={}, type={}, action={}, requestId={}",
+                userId,
+                frame.getType(),
+                frame.getAction(),
+                frame.getRequestId());
         
         throw new RuntimeException();
 

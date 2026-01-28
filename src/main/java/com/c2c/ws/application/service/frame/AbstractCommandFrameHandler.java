@@ -22,6 +22,11 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
     @Override
     public void handle(String userId, CFrame frame) {
         try {
+            log.info("handle command frame: userId={}, type={}, action={}, requestId={}",
+                    userId,
+                    frame.getType(),
+                    frame.getAction(),
+                    frame.getRequestId());
             sendAck(userId, frame);
             doHandle(userId, frame);
         } catch (Exception e) {
@@ -34,6 +39,10 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
 
     protected void sendAck(String userID, CFrame frame) {
         SFrame ack = buildAck(frame);
+        log.debug("sendAck: userId={}, requestId={}, resId={}",
+                userID,
+                ack.getRequestId(),
+                ack.getResId());
         sendToSessionPort.sendToSession(userID, ack);
     }
 
@@ -42,6 +51,11 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
 
         String payload = null;
         SFrame response = buildResult(frame, Status.ERROR, payload);
+        log.debug("sendErrorResult: userId={}, requestId={}, resId={}, error={}",
+                userId,
+                response.getRequestId(),
+                response.getResId(),
+                ex.getMessage());
         sendToSessionPort.sendToSession(userId, response);
     }
 

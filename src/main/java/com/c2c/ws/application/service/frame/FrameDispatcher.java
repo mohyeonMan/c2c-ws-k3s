@@ -32,7 +32,26 @@ public class FrameDispatcher implements FrameDispatcherUseCase {
 
     @Override
     public void dispatchFrame(String userId, CFrame frame) {
+        if (frame == null) {
+            log.warn("dispatchFrame: frame is null userId={}", userId);
+            return;
+        }
+
         FrameHandler handler = frameHandlerMap.get(frame.getType());
+        if (handler == null) {
+            log.warn("dispatchFrame: no handler userId={}, type={}, requestId={}",
+                    userId,
+                    frame.getType(),
+                    frame.getRequestId());
+            return;
+        }
+
+        log.info("dispatchFrame: userId={}, type={}, action={}, requestId={}, handler={}",
+                userId,
+                frame.getType(),
+                frame.getAction(),
+                frame.getRequestId(),
+                handler.getClass().getSimpleName());
         handler.handle(userId, frame);
     }
 }

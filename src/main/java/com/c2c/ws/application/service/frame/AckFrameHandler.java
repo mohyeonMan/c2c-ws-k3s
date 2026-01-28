@@ -27,8 +27,10 @@ public class AckFrameHandler implements FrameHandler {
 
     @Override
     public void handle(String userId, CFrame frame) {
-        
-        log.info("handle ack :: userId={}, frame={}",userId, frame.toString());
+        log.info("handle ack frame: userId={}, requestId={}, eventId={}",
+                userId,
+                frame.getRequestId(),
+                frame.getEventId());
 
         Ack ack = Ack.builder()
                 .ackId(IdGenerator.generateId("ack"))
@@ -36,6 +38,7 @@ public class AckFrameHandler implements FrameHandler {
                 .sentAt(Instant.now())
                 .build();
 
+        log.debug("ack built: ackId={}, eventId={}", ack.getAckId(), ack.getEventId());
         publishAckPort.publishAck(ack);
     }
     

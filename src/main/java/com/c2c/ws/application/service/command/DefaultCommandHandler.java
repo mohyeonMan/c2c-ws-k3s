@@ -16,8 +16,11 @@ public class DefaultCommandHandler implements CommandHandler{
     private final PublishCommandPort publishCommandPort;
 
     public void handle(Command command) {
-        
-        log.info("hadle defaultCommand :: command = {}", command);
+        log.info("handle defaultCommand: commandId={}, requestId={}, userId={}, action={}",
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId(),
+                command.getAction());
         publishCommandPort.publishCommand(command);
         
     }

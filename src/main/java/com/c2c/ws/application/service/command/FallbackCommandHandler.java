@@ -13,7 +13,11 @@ public class FallbackCommandHandler implements CommandHandler{
     
     @Override
     public void handle(Command command) {
-        log.info("UNSUPPORTED ACTION = {}", command.toString());
+        log.warn("unsupported action: commandId={}, requestId={}, userId={}, action={}",
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId(),
+                command.getAction());
         throw new RuntimeException("UNSUPPORTED ACTION");
     }
 

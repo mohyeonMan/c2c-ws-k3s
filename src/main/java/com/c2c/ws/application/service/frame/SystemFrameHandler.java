@@ -27,8 +27,10 @@ public class SystemFrameHandler implements FrameHandler {
 
     @Override
     public void handle(String userId, CFrame frame) {
-        
-        log.info("handle system frame :: userId={}, frame={}",userId, frame.toString());
+        log.info("handle system frame: userId={}, action={}, requestId={}",
+                userId,
+                frame.getAction(),
+                frame.getRequestId());
         Command command = Command.builder()
                 .requestId(frame.getRequestId())
                 .commandId(IdGenerator.generateId("sys-cmd"))
@@ -38,6 +40,11 @@ public class SystemFrameHandler implements FrameHandler {
                 .sentAt(Instant.now())
                 .build();
 
+        log.debug("system command built: commandId={}, requestId={}, userId={}, action={}",
+                command.getCommandId(),
+                command.getRequestId(),
+                command.getUserId(),
+                command.getAction());
         publishCommandPort.publishCommand(command);
     }
 }

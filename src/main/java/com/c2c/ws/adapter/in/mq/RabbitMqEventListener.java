@@ -29,6 +29,15 @@ public class RabbitMqEventListener implements ConsumeEventPort {
             return;
         }
 
+        log.info("event received: requestId={}, commandId={}, eventId={}, userId={}, type={}, action={}, status={}",
+                eventDto.getRequestId(),
+                eventDto.getCommandId(),
+                eventDto.getEventId(),
+                eventDto.getUserId(),
+                eventDto.getType(),
+                eventDto.getAction(),
+                eventDto.getStatus());
+
         EventType type = EventType.from(eventDto.getType());
         Status status = Status.from(eventDto.getStatus());
         Action action = Action.from(eventDto.getAction());
@@ -44,6 +53,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
                 .payload(eventDto.getPayload())
                 .sentAt(TimeFormat.parse(eventDto.getSentAt()))
                 .build();
+        log.debug("event mapped: type={}, action={}, status={}", type, action, status);
         eventHandler.handle(event);
     }
 
