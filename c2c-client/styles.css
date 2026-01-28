@@ -41,6 +41,13 @@ body {
   margin: 0 auto;
 }
 
+#chatView:not(.hidden) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 16px;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -238,7 +245,8 @@ input {
   background: rgba(15, 16, 24, 0.6);
   border: 1px solid var(--border);
   overflow-y: auto;
-  max-height: 60vh;
+  max-height: 70vh;
+  min-height: 0;
 }
 
 .bubble {

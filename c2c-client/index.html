@@ -187,12 +187,33 @@
       const sendJoin = async () => {};
       const sendRoomCreate = async () => {};
 
-      const defaultWsUrl = "ws://localhost:8080/ws";
-      const wsBaseUrl = location.host
-        ? `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
-        : defaultWsUrl;
+      const wsBaseUrl = "ws://jhhomehub.gonetis.com/ws";
 
       let socket = null;
+      let heartbeatTimer = null;
+
+      const startHeartbeat = () => {
+        stopHeartbeat();
+        heartbeatTimer = setInterval(() => {
+          if (!socket || socket.readyState !== WebSocket.OPEN) {
+            return;
+          }
+          const frame = {
+            requestId: `hb-${Date.now()}`,
+            type: "COMMAND",
+            action: "HEARTBEAT",
+            payload: "",
+          };
+          socket.send(JSON.stringify(frame));
+        }, 10000);
+      };
+
+      const stopHeartbeat = () => {
+        if (heartbeatTimer) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
+        }
+      };
 
       const connectSocket = () => {
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -203,9 +224,13 @@
           if (roomMeta) {
             roomMeta.textContent = "Connected";
           }
+          startHeartbeat();
         };
         socket.onmessage = (event) => handleSocketMessage(event.data);
-        socket.onclose = () => handleSocketClosed();
+        socket.onclose = () => {
+          stopHeartbeat();
+          handleSocketClosed();
+        };
         socket.onerror = () => {
           if (roomMeta) {
             roomMeta.textContent = "Connection error";

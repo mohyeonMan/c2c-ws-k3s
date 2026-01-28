@@ -16,6 +16,7 @@ import com.c2c.ws.application.port.in.ws.session.SessionLifecycleUseCase;
 import com.c2c.ws.application.service.session.SessionUserIdResolver;
 import com.c2c.ws.common.util.CommonMapper;
 import com.c2c.ws.common.util.IdGenerator;
+import com.c2c.ws.infrastructure.registry.model.Conn;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,22 @@ public class WsMessageHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         log.info("WS connection established: sessionId={}", session.getId());
-        sessionLifecycleUseCase.onOpen(session);
+        Conn conn = sessionLifecycleUseCase.onOpen(session);
+        String userId = conn.getUserId();
+
+        CFrame frame = CFrame.builder()
+                .requestId(IdGenerator.generateId("sys-req"))
+                .type(CFrameType.SYSTEM)
+                .action(Action.CONN_OPENED)
+                .payload(commonMapper.write(
+                    Map.of(
+                        "sessionId", session.getId(),
+                        "userId", userId,
+                        "connId", conn.getConnId()
+                    )
+                ))
+                .build();
+        frameDispatcherUseCase.dispatchFrame(userId, frame);
     }
 
     @Override
