@@ -1,0 +1,422 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>C2C Client</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <div id="homeView">
+        <header class="app-header">
+          <div>
+            <h1>C2C Client</h1>
+            <p class="muted">Create or join a room to start chatting.</p>
+          </div>
+          <span class="pill">Mobile-first</span>
+        </header>
+
+        <section class="card">
+          <h2>Room Actions</h2>
+          <div class="actions">
+            <button class="btn primary" id="createRoomBtn">Create Room</button>
+            <button class="btn" id="joinRoomBtn">Join Room</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Quick Tips</h2>
+          <ul class="list">
+            <li>Use a unique nickname for each device.</li>
+            <li>Share the Room ID to invite others.</li>
+            <li>Chat view is optimized for phones.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div id="chatView" class="hidden">
+        <header class="app-header">
+          <div>
+            <h1 id="roomTitle">Room</h1>
+            <p class="muted" id="roomMeta">Connected</p>
+          </div>
+          <button class="pill" id="backToHomeBtn">Back</button>
+        </header>
+
+        <section class="chat-window" id="chatWindow" aria-live="polite"></section>
+
+        <form class="composer" id="chatComposer" action="#" method="post">
+          <input type="text" id="chatInput" placeholder="Type a message..." />
+          <button class="btn primary" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="createRoomModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Create Room</h3>
+          <button class="icon-btn" id="closeModalBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="muted">Enter a nickname to create a room.</p>
+        <label class="field">
+          <span>Nickname</span>
+          <input type="text" id="nicknameInput" placeholder="nick" />
+        </label>
+        <div class="actions">
+          <button class="btn primary" id="confirmCreateBtn">Create</button>
+          <button class="btn" id="cancelCreateBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="joinRoomModal" aria-hidden="true">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Join Room</h3>
+          <button class="icon-btn" id="closeJoinModalBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="muted">Enter a nickname and room ID to join.</p>
+        <label class="field">
+          <span>Nickname</span>
+          <input type="text" id="joinNicknameInput" placeholder="nick" />
+        </label>
+        <label class="field">
+          <span>Room ID</span>
+          <input type="text" id="joinRoomIdInput" placeholder="room-123" />
+        </label>
+        <div class="actions">
+          <button class="btn primary" id="confirmJoinBtn">Join</button>
+          <button class="btn" id="cancelJoinBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="joinProgressModal" aria-hidden="true">
+      <div class="modal progress">
+        <div class="spinner" aria-hidden="true"></div>
+        <h3>Joining...</h3>
+        <p class="muted" id="joinProgressText">요청을 보내는 중...</p>
+      </div>
+    </div>
+
+    <script>
+      const createRoomBtn = document.getElementById("createRoomBtn");
+      const homeView = document.getElementById("homeView");
+      const chatView = document.getElementById("chatView");
+      const roomTitle = document.getElementById("roomTitle");
+      const roomMeta = document.getElementById("roomMeta");
+      const backToHomeBtn = document.getElementById("backToHomeBtn");
+      const chatWindow = document.getElementById("chatWindow");
+      const chatComposer = document.getElementById("chatComposer");
+      const chatInput = document.getElementById("chatInput");
+      const createRoomModal = document.getElementById("createRoomModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const cancelCreateBtn = document.getElementById("cancelCreateBtn");
+      const confirmCreateBtn = document.getElementById("confirmCreateBtn");
+      const nicknameInput = document.getElementById("nicknameInput");
+      const joinRoomBtn = document.getElementById("joinRoomBtn");
+      const joinRoomModal = document.getElementById("joinRoomModal");
+      const closeJoinModalBtn = document.getElementById("closeJoinModalBtn");
+      const cancelJoinBtn = document.getElementById("cancelJoinBtn");
+      const confirmJoinBtn = document.getElementById("confirmJoinBtn");
+      const joinNicknameInput = document.getElementById("joinNicknameInput");
+      const joinRoomIdInput = document.getElementById("joinRoomIdInput");
+      const joinProgressModal = document.getElementById("joinProgressModal");
+      const joinProgressText = document.getElementById("joinProgressText");
+      let joinState = {
+        nickname: "",
+        roomId: "",
+        requestId: "",
+        acked: false,
+        approved: false,
+      };
+      let createState = {
+        nickname: "",
+        roomId: "",
+        requestId: "",
+      };
+      let currentRoomId = "";
+      let currentNickname = "";
+
+      const openModal = () => {
+        createRoomModal.setAttribute("aria-hidden", "false");
+        createRoomModal.classList.add("open");
+        nicknameInput.focus();
+      };
+
+      const closeModal = () => {
+        createRoomModal.setAttribute("aria-hidden", "true");
+        createRoomModal.classList.remove("open");
+        nicknameInput.value = "";
+      };
+
+      const openJoinModal = () => {
+        joinRoomModal.setAttribute("aria-hidden", "false");
+        joinRoomModal.classList.add("open");
+        joinNicknameInput.focus();
+      };
+
+      const closeJoinModal = () => {
+        joinRoomModal.setAttribute("aria-hidden", "true");
+        joinRoomModal.classList.remove("open");
+        joinNicknameInput.value = "";
+        joinRoomIdInput.value = "";
+      };
+
+      const openJoinProgress = (message) => {
+        joinProgressText.textContent = message;
+        joinProgressModal.setAttribute("aria-hidden", "false");
+        joinProgressModal.classList.add("open");
+      };
+
+      const updateJoinProgress = (message) => {
+        joinProgressText.textContent = message;
+      };
+
+      const closeJoinProgress = () => {
+        joinProgressModal.setAttribute("aria-hidden", "true");
+        joinProgressModal.classList.remove("open");
+      };
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      // TODO: implement WS send logic later
+      const sendJoinRequest = async () => {};
+      const sendJoin = async () => {};
+      const sendRoomCreate = async () => {};
+
+      const defaultWsUrl = "ws://localhost:8080/ws";
+      const wsBaseUrl = location.host
+        ? `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
+        : defaultWsUrl;
+
+      let socket = null;
+
+      const connectSocket = () => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          return;
+        }
+        socket = new WebSocket(wsBaseUrl);
+        socket.onopen = () => {
+          if (roomMeta) {
+            roomMeta.textContent = "Connected";
+          }
+        };
+        socket.onmessage = (event) => handleSocketMessage(event.data);
+        socket.onclose = () => handleSocketClosed();
+        socket.onerror = () => {
+          if (roomMeta) {
+            roomMeta.textContent = "Connection error";
+          }
+        };
+      };
+
+      const handleSocketClosed = () => {
+        if (roomMeta) {
+          roomMeta.textContent = "Disconnected";
+        }
+        if (!chatView.classList.contains("hidden")) {
+          appendSystemMessage("연결이 종료되었습니다. 홈으로 이동합니다.");
+          exitRoom();
+        }
+      };
+
+      const appendSystemMessage = (text) => {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.innerHTML = `<div class="meta">system</div><p>${text}</p>`;
+        chatWindow.appendChild(bubble);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      };
+
+      const appendMessage = (text, sender, isSelf) => {
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${isSelf ? "out" : "in"}`;
+        bubble.innerHTML = `<div class="meta">${sender}</div><p>${text}</p>`;
+        chatWindow.appendChild(bubble);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      };
+
+      const handleSocketMessage = (data) => {
+        let message;
+        try {
+          message = JSON.parse(data);
+        } catch (e) {
+          return;
+        }
+
+        if (message.type === "MESSAGE" && message.action === "CLIENT_MESSAGE") {
+          let payload = null;
+          try {
+            payload = message.payload ? JSON.parse(message.payload) : null;
+          } catch (e) {
+            payload = null;
+          }
+          if (payload) {
+            const sender = payload.nickname || payload.userId || "user";
+            const isSelf = payload.nickname && payload.nickname === currentNickname;
+            appendMessage(payload.message || "", sender, isSelf);
+          }
+          return;
+        }
+
+        if (message.type === "NOTIFY" && message.action === "JOIN") {
+          let payload = null;
+          try {
+            payload = message.payload ? JSON.parse(message.payload) : null;
+          } catch (e) {
+            payload = null;
+          }
+          if (payload) {
+            appendSystemMessage(`${payload.nickname || payload.userId} joined.`);
+          }
+          return;
+        }
+
+        if (message.type === "NOTIFY" && message.action === "LEAVE") {
+          let payload = null;
+          try {
+            payload = message.payload ? JSON.parse(message.payload) : null;
+          } catch (e) {
+            payload = null;
+          }
+          if (payload) {
+            appendSystemMessage(`${payload.nickname || payload.userId} left.`);
+          }
+          return;
+        }
+      };
+
+      const enterRoom = (roomId, nickname) => {
+        currentRoomId = roomId;
+        currentNickname = nickname;
+        roomTitle.textContent = roomId;
+        roomMeta.textContent = `Connected as ${nickname}`;
+        chatWindow.innerHTML = "";
+        homeView.classList.add("hidden");
+        chatView.classList.remove("hidden");
+      };
+
+      const exitRoom = () => {
+        currentRoomId = "";
+        currentNickname = "";
+        chatInput.value = "";
+        chatView.classList.add("hidden");
+        homeView.classList.remove("hidden");
+      };
+
+      const navigateToRoom = (roomId, nickname) => {
+        closeJoinProgress();
+        enterRoom(roomId, nickname);
+      };
+
+      const runJoinFlow = async () => {
+        openJoinProgress("요청을 보내는 중...");
+        await sendJoinRequest();
+        updateJoinProgress("승인을 기다리고 있습니다...");
+        await sleep(400);
+        updateJoinProgress("승인 완료. 참여 처리 중...");
+        await sendJoin();
+        await sleep(400);
+        navigateToRoom(joinState.roomId, joinState.nickname);
+      };
+
+      const runCreateFlow = async () => {
+        openJoinProgress("방을 생성 요청중입니다...");
+        await sendRoomCreate();
+        updateJoinProgress("방을 생성하고 있습니다...");
+        await sleep(400);
+        updateJoinProgress("참여 처리 중...");
+        await sendJoin();
+        await sleep(400);
+        navigateToRoom(createState.roomId, createState.nickname);
+      };
+
+      createRoomBtn.addEventListener("click", openModal);
+      closeModalBtn.addEventListener("click", closeModal);
+      cancelCreateBtn.addEventListener("click", closeModal);
+      createRoomModal.addEventListener("click", (event) => {
+        if (event.target === createRoomModal) {
+          closeModal();
+        }
+      });
+      confirmCreateBtn.addEventListener("click", () => {
+        const nickname = nicknameInput.value.trim();
+        if (!nickname) {
+          nicknameInput.focus();
+          return;
+        }
+        closeModal();
+        createState = {
+          nickname,
+          roomId: `room-${Date.now()}`,
+          requestId: `req-${Date.now()}`,
+        };
+        runCreateFlow();
+      });
+
+      joinRoomBtn.addEventListener("click", openJoinModal);
+      closeJoinModalBtn.addEventListener("click", closeJoinModal);
+      cancelJoinBtn.addEventListener("click", closeJoinModal);
+      joinRoomModal.addEventListener("click", (event) => {
+        if (event.target === joinRoomModal) {
+          closeJoinModal();
+        }
+      });
+      confirmJoinBtn.addEventListener("click", () => {
+        const nickname = joinNicknameInput.value.trim();
+        const roomId = joinRoomIdInput.value.trim();
+        if (!nickname) {
+          joinNicknameInput.focus();
+          return;
+        }
+        if (!roomId) {
+          joinRoomIdInput.focus();
+          return;
+        }
+        closeJoinModal();
+        joinState = {
+          nickname,
+          roomId,
+          requestId: "",
+          acked: false,
+          approved: false,
+        };
+        runJoinFlow();
+      });
+
+      backToHomeBtn.addEventListener("click", exitRoom);
+
+      chatComposer.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+        if (!currentRoomId) {
+          appendSystemMessage("방에 먼저 입장하세요.");
+          return;
+        }
+        const payload = {
+          roomId: currentRoomId,
+          message,
+        };
+        const frame = {
+          requestId: `req-${Date.now()}`,
+          type: "COMMAND",
+          action: "CLIENT_MESSAGE",
+          payload: JSON.stringify(payload),
+        };
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify(frame));
+          appendMessage(message, "you", true);
+          chatInput.value = "";
+        } else {
+          appendSystemMessage("연결이 끊어졌습니다.");
+        }
+      });
+
+      connectSocket();
+    </script>
+  </body>
+</html>
