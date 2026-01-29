@@ -38,7 +38,7 @@ public class DefaultCommandFrameHandler extends AbstractCommandFrameHandler {
     @Override
     public void doHandle(String userId, CFrame frame) {
     
-        log.info("handle command frame: userId={}, type={}, action={}, requestId={}",
+        log.debug("handle command frame: userId={}, type={}, action={}, requestId={}",
                 userId,
                 frame.getType(),
                 frame.getAction(),

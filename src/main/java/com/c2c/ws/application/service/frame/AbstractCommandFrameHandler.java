@@ -22,7 +22,7 @@ public abstract class AbstractCommandFrameHandler implements FrameHandler{
     @Override
     public void handle(String userId, CFrame frame) {
         try {
-            log.info("handle command frame: userId={}, type={}, action={}, requestId={}",
+            log.debug("handle command frame: userId={}, type={}, action={}, requestId={}",
                     userId,
                     frame.getType(),
                     frame.getAction(),
