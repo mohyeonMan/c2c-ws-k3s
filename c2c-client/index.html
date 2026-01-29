@@ -854,6 +854,9 @@
             ownerId: "",
             entries: [],
           },
+          reconnect: {
+            pending: false,
+          },
           pendingJoinRequest: null,
           resetJoin(nickname = "", roomId = "") {
             this.join = {
@@ -880,6 +883,7 @@
               ownerId: "",
               entries: [],
             };
+            this.reconnect.pending = false;
             this.pendingJoinRequest = null;
           },
         };
@@ -933,7 +937,6 @@
           const SCROLL_THRESHOLD_PX = 24;
           const SCROLL_BTN_DELAY_MS = 250;
           const COPY_RESET_MS = 1000;
-          const JOIN_WAIT_MS = 60000;
           let copyResetTimer = null;
           let scrollBtnTimer = null;
           let scrollBtnVisible = false;
@@ -943,8 +946,6 @@
           let lastTimeElOther = null;
           let lastSenderId = "";
           let lastSenderEl = null;
-          let joinProgressTimer = null;
-          let joinDeadline = null;
 
           const setModalOpen = (modal, isOpen) => {
             modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
@@ -1057,25 +1058,6 @@
           const openJoinProgress = (message) => {
             Dom.joinProgressText.textContent = message;
             setModalOpen(Dom.joinProgressModal, true);
-            State.join.pending = true;
-            const tick = () => {
-              if (!joinDeadline) return;
-              const remaining = Math.max(0, joinDeadline - Date.now());
-              const totalSeconds = Math.ceil(remaining / 1000);
-              const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-              const ss = String(totalSeconds % 60).padStart(2, "0");
-              Dom.joinProgressTime.textContent = `${mm}:${ss}`;
-              if (remaining <= 0 && joinProgressTimer) {
-                clearInterval(joinProgressTimer);
-                joinProgressTimer = null;
-              }
-            };
-            joinDeadline = Date.now() + JOIN_WAIT_MS;
-            tick();
-            if (joinProgressTimer) {
-              clearInterval(joinProgressTimer);
-            }
-            joinProgressTimer = setInterval(tick, 1000);
           };
 
           const updateJoinProgress = (message) => {
@@ -1084,12 +1066,11 @@
 
           const closeJoinProgress = () => {
             setModalOpen(Dom.joinProgressModal, false);
-            if (joinProgressTimer) {
-              clearInterval(joinProgressTimer);
-              joinProgressTimer = null;
-            }
-            joinDeadline = null;
-            State.join.pending = false;
+          };
+
+          const setJoinProgressTime = (text) => {
+            if (!Dom.joinProgressTime) return;
+            Dom.joinProgressTime.textContent = text;
           };
 
           const showJoinStatus = (message) => {
@@ -1098,6 +1079,11 @@
               return;
             }
             appendSystemMessage(message);
+          };
+
+          const showReconnectStatus = (message) => {
+            setJoinProgressTime("--:--");
+            openJoinProgress(message);
           };
 
           const buildRoomLink = () => {
@@ -1303,7 +1289,9 @@
             openJoinProgress,
             updateJoinProgress,
             closeJoinProgress,
+            setJoinProgressTime,
             showJoinStatus,
+            showReconnectStatus,
             copyRoomLink,
             copyRoomId,
             openJoinApproveModal,
@@ -1320,6 +1308,149 @@
             exitRoomView,
             scrollToBottom,
             updateScrollToBottomButton,
+          };
+        })();
+
+        const JoinFlow = (() => {
+          const WAIT_MS = 60000;
+          let timer = null;
+          let deadline = null;
+
+          const clearTimer = () => {
+            if (timer) {
+              clearInterval(timer);
+              timer = null;
+            }
+          };
+
+          const stopCountdown = () => {
+            clearTimer();
+            deadline = null;
+          };
+
+          const finish = () => {
+            stopCountdown();
+            State.join.pending = false;
+          };
+
+          const timeout = () => {
+            console.log("[join-flow] timeout");
+            finish();
+            UI.setJoinProgressTime("--:--");
+            UI.closeJoinProgress();
+            UI.openSystemModal("참여 대기 시간이 초과되었습니다.");
+          };
+
+          const tick = () => {
+            if (!deadline) return;
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) {
+              timeout();
+              return;
+            }
+            const totalSeconds = Math.ceil(remaining / 1000);
+            const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+            const ss = String(totalSeconds % 60).padStart(2, "0");
+            UI.setJoinProgressTime(`${mm}:${ss}`);
+          };
+
+          const start = (message) => {
+            console.log("[join-flow] start", { message });
+            State.join.pending = true;
+            deadline = Date.now() + WAIT_MS;
+            UI.setJoinProgressTime("--:--");
+            UI.openJoinProgress(message);
+            tick();
+            clearTimer();
+            timer = setInterval(tick, 1000);
+          };
+
+          const cancel = () => {
+            console.log("[join-flow] cancel");
+            finish();
+            UI.setJoinProgressTime("--:--");
+            UI.closeJoinProgress();
+          };
+
+          const isPending = () => State.join.pending;
+
+          return {
+            start,
+            cancel,
+            finish,
+            stopCountdown,
+            isPending,
+          };
+        })();
+
+        const ReconnectFlow = (() => {
+          const WAIT_MS = 60000;
+          let timer = null;
+          let deadline = null;
+
+          const clearTimer = () => {
+            if (timer) {
+              clearInterval(timer);
+              timer = null;
+            }
+          };
+
+          const stopCountdown = () => {
+            clearTimer();
+            deadline = null;
+          };
+
+          const finish = () => {
+            stopCountdown();
+            State.reconnect.pending = false;
+          };
+
+          const timeout = () => {
+            finish();
+            UI.setJoinProgressTime("--:--");
+            UI.closeJoinProgress();
+            State.clearSession(true);
+            UI.exitRoomView();
+            UI.openSystemModal("연결이 끊어졌습니다.");
+          };
+
+          const tick = () => {
+            if (!deadline) return;
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) {
+              timeout();
+              return;
+            }
+            const totalSeconds = Math.ceil(remaining / 1000);
+            const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+            const ss = String(totalSeconds % 60).padStart(2, "0");
+            UI.setJoinProgressTime(`${mm}:${ss}`);
+          };
+
+          const start = (message) => {
+            State.reconnect.pending = true;
+            deadline = Date.now() + WAIT_MS;
+            UI.setJoinProgressTime("--:--");
+            UI.openJoinProgress(message);
+            tick();
+            clearTimer();
+            timer = setInterval(tick, 1000);
+          };
+
+          const cancel = () => {
+            finish();
+            UI.setJoinProgressTime("--:--");
+            UI.closeJoinProgress();
+          };
+
+          const isPending = () => State.reconnect.pending;
+
+          return {
+            start,
+            cancel,
+            finish,
+            stopCountdown,
+            isPending,
           };
         })();
 
@@ -1435,6 +1566,13 @@
 
           const handleSocketClosed = () => {
             UI.setRoomMeta("Disconnected");
+            if (State.session.roomId && State.session.nickname) {
+              ReconnectFlow.start("연결이 끊겼습니다. 재연결 시도 중...");
+              reconnectSocket("socket closed");
+              return;
+            }
+            UI.setJoinProgressTime("--:--");
+            UI.openJoinProgress("연결이 끊겼습니다.");
             if (!Dom.chatView.classList.contains("hidden")) {
               UI.appendSystemMessage("연결이 종료되었습니다. 홈으로 이동합니다.");
               Actions.exitRoom(false);
@@ -1454,6 +1592,10 @@
             socket.onopen = () => {
               UI.setRoomMeta("Connected");
               startHeartbeat();
+              if (ReconnectFlow.isPending() && State.session.roomId && State.session.nickname) {
+                UI.showReconnectStatus("재연결 중...");
+                Actions.sendJoin(State.session.roomId, State.session.nickname);
+              }
             };
             socket.onmessage = (event) => Protocol.handleSocketMessage(event.data);
             socket.onclose = () => {
@@ -1475,24 +1617,6 @@
         })();
 
         const Actions = (() => {
-          let joinTimeoutTimer = null;
-          const clearJoinTimeout = () => {
-            if (joinTimeoutTimer) {
-              clearTimeout(joinTimeoutTimer);
-              joinTimeoutTimer = null;
-            }
-          };
-
-          const armJoinTimeout = () => {
-            clearJoinTimeout();
-            joinTimeoutTimer = setTimeout(() => {
-              UI.closeJoinProgress();
-              UI.openSystemModal("참여 대기 시간이 초과되었습니다.");
-              State.join.pending = false;
-              joinTimeoutTimer = null;
-            }, 60000);
-          };
-
           const sendJoinRequest = async () => {
             const requestId = WsClient.sendCommand("JOIN_REQUEST", {
               roomId: State.join.roomId,
@@ -1533,17 +1657,16 @@
           };
 
           const runJoinFlow = async () => {
-            UI.openJoinProgress("요청을 보내는 중...");
+            JoinFlow.start("요청을 보내는 중...");
             await sendJoinRequest();
             if (!State.join.requestId) {
-              UI.closeJoinProgress();
-              clearJoinTimeout();
+              JoinFlow.cancel();
               return;
             }
-            armJoinTimeout();
           };
 
           const runCreateFlow = async () => {
+            UI.setJoinProgressTime("--:--");
             UI.openJoinProgress("방을 생성 요청중입니다...");
             await sendRoomCreate();
             if (!State.create.requestId) {
@@ -1561,6 +1684,7 @@
             if (State.session.roomId) {
               WsClient.sendCommand("LEAVE", { roomId: State.session.roomId });
             }
+            State.reconnect.pending = false;
             State.clearSession(keepUserId);
             UI.exitRoomView();
           };
@@ -1574,7 +1698,6 @@
             runCreateFlow,
             enterRoom,
             exitRoom,
-            clearJoinTimeout,
           };
         })();
 
@@ -1634,12 +1757,16 @@
 
             if (message.action === "JOIN") {
               if (message.status === "ERROR") {
+                console.log("[join-flow] join result error", message);
                 UI.updateJoinProgress("참여 실패.");
-                UI.closeJoinProgress();
-                Actions.clearJoinTimeout();
-                State.join.pending = false;
+                if (ReconnectFlow.isPending()) {
+                  ReconnectFlow.timeout();
+                } else {
+                  JoinFlow.cancel();
+                }
                 return;
               }
+              console.log("[join-flow] join result success", message);
               const roomId = payload?.roomId || State.join.roomId;
               const ownerId = payload?.ownerId;
               const entries = Array.isArray(payload?.entries) ? payload.entries : [];
@@ -1649,20 +1776,26 @@
               if (entries.length) {
                 State.session.entries = entries;
               }
-              UI.closeJoinProgress();
-              Actions.enterRoom(roomId, State.join.nickname || State.create.nickname);
-              UI.updateEntriesUI();
-              Actions.clearJoinTimeout();
-              State.join.pending = false;
+              if (ReconnectFlow.isPending() && !Dom.chatView.classList.contains("hidden")) {
+                ReconnectFlow.finish();
+                UI.setJoinProgressTime("--:--");
+                UI.closeJoinProgress();
+                UI.setRoomMeta(`Connected as ${State.session.nickname}`);
+                UI.updateEntriesUI();
+                UI.appendSystemMessage("재연결되었습니다.");
+              } else {
+                JoinFlow.cancel();
+                Actions.enterRoom(roomId, State.join.nickname || State.create.nickname);
+                UI.updateEntriesUI();
+              }
               return;
             }
 
             if (message.action === "JOIN_REQUEST") {
               if (message.status === "ERROR") {
+                console.log("[join-flow] join request error", message);
                 UI.updateJoinProgress("승인 요청 실패.");
-                UI.closeJoinProgress();
-                Actions.clearJoinTimeout();
-                State.join.pending = false;
+                JoinFlow.cancel();
               }
             }
           };
@@ -1715,20 +1848,23 @@
             }
 
             if (message.action === "JOIN_APPROVE") {
-              if (!State.join.pending) {
+              if (!JoinFlow.isPending()) {
+                console.log("[join-flow] approve ignored (not pending)", message);
                 return;
               }
               if (payload.requestedUserId && payload.requestedUserId !== State.session.userId) {
+                console.log("[join-flow] approve ignored (other user)", message);
                 return;
               }
               if (payload.approved) {
+                console.log("[join-flow] approve accepted", message);
                 UI.showJoinStatus("참여 요청이 승인되었습니다.");
+                JoinFlow.stopCountdown();
                 Actions.sendJoin(payload.roomId, State.join.nickname);
-                Actions.clearJoinTimeout();
               } else {
-                UI.closeJoinProgress();
+                console.log("[join-flow] approve rejected", message);
+                JoinFlow.cancel();
                 UI.openSystemModal("참여가 거부되었습니다.");
-                Actions.clearJoinTimeout();
               }
             }
           };
@@ -1842,6 +1978,7 @@
                 Dom.joinRoomIdInput.focus();
                 return;
               }
+              console.log("[join-flow] confirm join", { nickname, roomId });
               UI.closeJoinModal();
               State.resetJoin(nickname, roomId);
               Actions.runJoinFlow();
@@ -1853,8 +1990,14 @@
             Dom.copyRoomLinkBtn.addEventListener("click", UI.copyRoomLink);
             Dom.copyRoomIdBtn.addEventListener("click", UI.copyRoomId);
             Dom.closeJoinProgressBtn.addEventListener("click", () => {
-              UI.closeJoinProgress();
-              Actions.clearJoinTimeout();
+              console.log("[join-flow] user cancel (close button)");
+              if (ReconnectFlow.isPending()) {
+                ReconnectFlow.timeout();
+              } else if (JoinFlow.isPending()) {
+                JoinFlow.cancel();
+              } else {
+                UI.closeJoinProgress();
+              }
             });
 
             Dom.closeJoinApproveBtn.addEventListener("click", UI.closeJoinApproveModal);
