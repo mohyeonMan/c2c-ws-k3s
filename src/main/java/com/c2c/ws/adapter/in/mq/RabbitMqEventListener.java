@@ -29,7 +29,7 @@ public class RabbitMqEventListener implements ConsumeEventPort {
             return;
         }
 
-        log.info("event received: requestId={}, commandId={}, eventId={}, userId={}, type={}, action={}, status={}",
+        log.debug("event received: requestId={}, commandId={}, eventId={}, userId={}, type={}, action={}, status={}",
                 eventDto.getRequestId(),
                 eventDto.getCommandId(),
                 eventDto.getEventId(),

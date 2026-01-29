@@ -17,46 +17,6 @@
         --border: #d8c9b8;
         --bubble-in: #efe3d2;
         --bubble-out: #8c2f3a;
-        --surface: #f7f1e8;
-        --surface-2: #efe3d2;
-        --panel: rgba(239, 227, 210, 0.85);
-        --panel-2: rgba(239, 227, 210, 0.65);
-        --input-bg: #efe6d7;
-        --input-border: #d8c9b8;
-        --pill-bg: rgba(178, 59, 69, 0.12);
-        --pill-border: rgba(178, 59, 69, 0.28);
-        --pill-text: #8c2f3a;
-        --pill-soft-bg: rgba(140, 47, 58, 0.12);
-        --pill-soft-border: rgba(140, 47, 58, 0.35);
-        --pill-soft-text: #7a2a35;
-        --entry-bg: rgba(239, 227, 210, 0.6);
-        --system-bg: rgba(239, 227, 210, 0.45);
-        --shadow-card: 0 10px 30px rgba(80, 60, 40, 0.18);
-        --shadow-float: 0 12px 30px rgba(80, 60, 40, 0.22);
-        --paper-bg: rgba(247, 241, 232, 0.9);
-        --paper-border: rgba(212, 196, 179, 0.6);
-        --paper-shadow: 0 16px 40px rgba(80, 60, 40, 0.12);
-        --link: #7a4a43;
-        --primary-text: #2a1f1a;
-        --modal-backdrop: rgba(64, 52, 40, 0.35);
-        --modal-shadow: 0 18px 50px rgba(80, 60, 40, 0.28);
-        --spinner-track: rgba(140, 47, 58, 0.18);
-        --bubble-shadow: 0 6px 16px rgba(80, 60, 40, 0.22);
-        --bubble-out-text: #fff6f4;
-        --meta: #6f5a54;
-        --entries-self: #3b6b7a;
-        --entries-owner-border: rgba(140, 47, 58, 0.4);
-        --owner-badge-bg: rgba(140, 47, 58, 0.16);
-        --owner-badge-text: #7a2a35;
-        --owner-badge-border: rgba(140, 47, 58, 0.4);
-        --copied-bg: rgba(140, 47, 58, 0.22);
-        --copied-border: rgba(140, 47, 58, 0.55);
-        --copied-text: #fff4f2;
-        --bg-grad-1: #e8dcc7;
-        --bg-grad-2: #ead6c1;
-        --bg-grad-3: #f0e5d6;
-        --bg-grad-4: #e8dbc9;
-        --transparent: transparent;
       }
 
       *,
@@ -76,9 +36,9 @@
         font: 15px/1.5 "Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif;
         color: var(--text);
         background:
-          radial-gradient(1200px 700px at 10% -10%, var(--bg-grad-1) 0%, var(--transparent) 55%),
-          radial-gradient(900px 600px at 90% 0%, var(--bg-grad-2) 0%, var(--transparent) 50%),
-          linear-gradient(180deg, var(--bg-grad-3) 0%, var(--bg-grad-4) 100%);
+          radial-gradient(1200px 700px at 10% -10%, #e8dcc7 0%, transparent 55%),
+          radial-gradient(900px 600px at 90% 0%, #ead6c1 0%, transparent 50%),
+          linear-gradient(180deg, #f0e5d6 0%, #e8dbc9 100%);
       }
 
       button,
@@ -102,8 +62,9 @@
         height: 100dvh;
         max-width: 420px;
         margin: 0 auto;
-        background: var(--paper-bg);
-        box-shadow: 0 0 0 1px var(--paper-border), var(--paper-shadow);
+        background: rgba(247, 241, 232, 0.9);
+        box-shadow: 0 0 0 1px rgba(212, 196, 179, 0.6),
+          0 16px 40px rgba(80, 60, 40, 0.12);
       }
 
       #chatView:not(.hidden) {
@@ -175,11 +136,11 @@
       }
 
       .card {
-        background: var(--surface);
+        background: var(--card);
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 14px;
-        box-shadow: var(--shadow-card);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
       }
 
       .stack {
@@ -202,9 +163,9 @@
       input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid var(--input-border);
+        border: 1px solid var(--border);
         border-radius: 12px;
-        background: var(--input-bg);
+        background: var(--bg-2);
         color: var(--text);
         font: inherit;
       }
@@ -219,7 +180,7 @@
       .btn {
         border: 1px solid var(--border);
         border-radius: 12px;
-        background: var(--surface-2);
+        background: var(--card-2);
         color: var(--text);
         padding: 10px 14px;
         cursor: pointer;
@@ -228,7 +189,7 @@
 
       .btn.primary {
         background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-        color: var(--primary-text);
+        color: #06221c;
         border: none;
         font-weight: 600;
       }
@@ -236,7 +197,7 @@
       .link {
         display: inline-flex;
         margin-top: 12px;
-        color: var(--link);
+        color: #cfe5ff;
         text-decoration: none;
         font-size: 13px;
       }
@@ -248,7 +209,7 @@
         align-items: center;
         justify-content: center;
         padding: 16px;
-        background: var(--modal-backdrop);
+        background: rgba(4, 6, 10, 0.7);
         z-index: 10;
       }
 
@@ -263,7 +224,7 @@
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 16px;
-        box-shadow: var(--modal-shadow);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
       }
 
       .modal.toast {
@@ -293,7 +254,7 @@
       }
 
       .icon-btn {
-        background: var(--transparent);
+        background: transparent;
         border: none;
         color: var(--muted);
         font-size: 18px;
@@ -305,7 +266,7 @@
         height: 36px;
         margin: 6px auto 4px;
         border-radius: 50%;
-        border: 3px solid var(--spinner-track);
+        border: 3px solid rgba(94, 234, 212, 0.25);
         border-top-color: var(--accent);
         animation: spin 0.9s linear infinite;
       }
@@ -328,17 +289,17 @@
         align-items: center;
         padding: 6px 10px;
         border-radius: 999px;
-        background: var(--pill-bg);
-        color: var(--pill-text);
+        background: rgba(96, 165, 250, 0.16);
+        color: #cfe5ff;
         font-size: 12px;
-        border: 1px solid var(--pill-border);
+        border: 1px solid rgba(96, 165, 250, 0.35);
         text-decoration: none;
       }
 
       .pill.secondary {
-        background: var(--pill-soft-bg);
-        border-color: var(--pill-soft-border);
-        color: var(--pill-soft-text);
+        background: rgba(15, 118, 110, 0.15);
+        border-color: rgba(94, 234, 212, 0.35);
+        color: #bffbf0;
       }
 
       .pill.secondary.link-btn {
@@ -347,9 +308,9 @@
       }
 
       .pill.secondary.link-btn.is-copied {
-        background: var(--copied-bg);
-        border-color: var(--copied-border);
-        color: var(--copied-text);
+        background: rgba(94, 234, 212, 0.22);
+        border-color: rgba(94, 234, 212, 0.55);
+        color: #e6fffb;
       }
       .header-actions {
         display: inline-flex;
@@ -365,10 +326,10 @@
       }
 
       .entries-trigger {
-        border: 1px solid var(--pill-soft-border);
+        border: 1px solid rgba(94, 234, 212, 0.5);
         border-radius: 999px;
-        background: var(--pill-soft-bg);
-        color: var(--pill-soft-text);
+        background: rgba(94, 234, 212, 0.15);
+        color: #bffbf0;
         font-size: 12px;
         padding: 4px 10px;
         cursor: pointer;
@@ -380,12 +341,11 @@
         left: 0;
         min-width: 200px;
         max-width: 260px;
-        background: var(--surface);
+        background: var(--card);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 8px;
-        box-shadow: var(--shadow-float);
-        color: var(--text);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
         opacity: 0;
         visibility: hidden;
         transform: translateY(-6px);
@@ -415,26 +375,26 @@
         gap: 8px;
         padding: 6px 8px;
         border-radius: 10px;
-        background: var(--entry-bg);
+        background: rgba(15, 16, 24, 0.4);
         font-size: 12px;
         color: var(--text);
       }
 
       .entries-item.is-self {
-        color: var(--entries-self);
+        color: #7dd3fc;
       }
 
       .entries-item.is-owner {
-        border: 1px solid var(--entries-owner-border);
+        border: 1px solid rgba(96, 165, 250, 0.5);
       }
 
       .owner-badge {
         font-size: 10px;
         padding: 2px 6px;
         border-radius: 999px;
-        background: var(--owner-badge-bg);
-        color: var(--owner-badge-text);
-        border: 1px solid var(--owner-badge-border);
+        background: rgba(96, 165, 250, 0.2);
+        color: #cfe5ff;
+        border: 1px solid rgba(96, 165, 250, 0.4);
       }
 
       .chat-body {
@@ -453,7 +413,7 @@
         gap: 0;
         padding: 14px;
         border-radius: 16px;
-        background: var(--panel);
+        background: rgba(15, 16, 24, 0.6);
         border: 1px solid var(--border);
         overflow-y: auto;
         min-height: 0;
@@ -471,7 +431,7 @@
         padding: 4px 9px;
         border-radius: 14px 14px 14px 4px;
         background: var(--bubble-in);
-        box-shadow: var(--bubble-shadow);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         font-size: 13px;
         margin-top: 1px;
         margin-bottom: 0;
@@ -488,7 +448,7 @@
       .bubble.out {
         align-self: flex-end;
         background: var(--bubble-out);
-        color: var(--bubble-out-text);
+        color: #e8fffb;
         border-radius: 14px 14px 4px 14px;
         margin-top: 3px;
       }
@@ -502,14 +462,14 @@
         font-size: 12px;
         color: var(--muted);
         text-align: center;
-        background: var(--system-bg);
+        background: rgba(15, 16, 24, 0.35);
         /* border: 1px solid var(--border); */
         border-radius: 999px;
       }
 
       .meta {
         font-size: 11px;
-        color: var(--meta);
+        color: #cbd5e1;
         margin-bottom: 4px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -571,10 +531,10 @@
         left: 50%;
         bottom: 10px;
         transform: translateX(-50%);
-        border: 1px solid var(--pill-soft-border);
+        border: 1px solid rgba(94, 234, 212, 0.22);
         border-radius: 999px;
-        background: var(--pill-soft-bg);
-        color: var(--pill-soft-text);
+        background: rgba(15, 118, 110, 0.3);
+        color: #bffbf0;
         padding: 6px 10px;
         font-size: 12px;
         cursor: pointer;

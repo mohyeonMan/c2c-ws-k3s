@@ -30,7 +30,7 @@ public class RabbitMqCommandPublisher implements PublishCommandPort {
 
     @Override
     public void publishCommand(Command command) {
-        log.info("command = {}", command);
+        log.debug("command = {}", command);
         CommandDto commandDto = CommandDto.builder()
                 .commandId(command.getCommandId())
                 .requestId(command.getRequestId())
