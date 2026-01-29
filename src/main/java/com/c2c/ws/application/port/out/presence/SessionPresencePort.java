@@ -5,5 +5,7 @@ public interface SessionPresencePort {
     void markSessionActive(String userId, String routingKey);
 
     void markSessionInactive(String userId);
+
+    boolean isSessionActive(String userId);
     
 }

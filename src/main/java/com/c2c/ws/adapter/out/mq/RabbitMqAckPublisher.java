@@ -29,7 +29,7 @@ public class RabbitMqAckPublisher implements PublishAckPort {
     }
     @Override
     public void publishAck(Ack ack) {
-        log.info("ack = {}", ack);
+        log.debug("ack = {}", ack);
         AckDto ackDto = AckDto.builder()
                 .ackId(ack.getAckId())
                 .eventId(ack.getEventId())

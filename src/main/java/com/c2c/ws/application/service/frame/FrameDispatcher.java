@@ -46,7 +46,7 @@ public class FrameDispatcher implements FrameDispatcherUseCase {
             return;
         }
 
-        log.info("dispatchFrame: userId={}, type={}, action={}, requestId={}, handler={}",
+        log.debug("dispatchFrame: userId={}, type={}, action={}, requestId={}, handler={}",
                 userId,
                 frame.getType(),
                 frame.getAction(),

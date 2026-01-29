@@ -42,6 +42,15 @@ public class RedisSessionPresenceAdapter implements SessionPresencePort {
         redisTemplate.delete(key(userId));
     }
 
+    @Override
+    public boolean isSessionActive(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return false;
+        }
+        Boolean exists = redisTemplate.hasKey(key(userId));
+        return Boolean.TRUE.equals(exists);
+    }
+
     private String key(String userId) {
         return KEY_PREFIX + userId;
     }

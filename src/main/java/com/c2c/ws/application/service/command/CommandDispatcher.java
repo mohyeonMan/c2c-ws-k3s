@@ -40,7 +40,7 @@ public class CommandDispatcher implements CommandDispatcherUseCase{
                 break;
         }
 
-        log.info("dispatchCommand: action={}, commandId={}, requestId={}, userId={}, handler={}",
+        log.debug("dispatchCommand: action={}, commandId={}, requestId={}, userId={}, handler={}",
                 action,
                 command.getCommandId(),
                 command.getRequestId(),

@@ -46,7 +46,7 @@ public class WsMessageHandler extends TextWebSocketHandler {
             return;
         }
 
-        log.info("WS message received: sessionId={}, userId={}, type={}, action={}, requestId={}",
+        log.debug("WS message received: sessionId={}, userId={}, type={}, action={}, requestId={}",
                 session.getId(),
                 userId,
                 frame.getType(),
@@ -58,7 +58,7 @@ public class WsMessageHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        log.info("WS connection established: sessionId={}", session.getId());
+        log.debug("WS connection established: sessionId={}", session.getId());
         Conn conn = sessionLifecycleUseCase.onOpen(session);
         String userId = conn.getUserId();
 
@@ -80,7 +80,7 @@ public class WsMessageHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String userId = sessionUserIdResolver.resolve(session);
-        log.info("WS connection closed: sessionId={}, userId={}, code={}, reason={}",
+        log.debug("WS connection closed: sessionId={}, userId={}, code={}, reason={}",
                 session.getId(),
                 userId,
                 status.getCode(),

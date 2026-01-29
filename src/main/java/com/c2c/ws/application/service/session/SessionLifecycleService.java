@@ -30,6 +30,10 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
         if (userId == null || userId.isBlank()) {
             userId = IdGenerator.generateId("user");
         }
+        if (sessionPresencePort.isSessionActive(userId)) {
+            log.info("onOpen: presence exists, issuing new userId. oldUserId={}", userId);
+            userId = IdGenerator.generateId("user");
+        }
 
         log.info("onOpen: sessionId={}, userId={}, routingKey={}",
                 session.getId(),
