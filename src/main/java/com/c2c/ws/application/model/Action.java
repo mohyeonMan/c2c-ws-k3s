@@ -13,6 +13,9 @@ public enum Action {
     JOIN_REQUEST,
     JOIN_APPROVE,
     LEAVE,
+    ONLINE,
+    OFFLINE,
+    ROOM_LIST,
     CLIENT_MESSAGE,
     HEARTBEAT,
     @JsonEnumDefaultValue
