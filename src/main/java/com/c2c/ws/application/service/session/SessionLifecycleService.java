@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.c2c.ws.application.port.in.ws.session.SessionLifecycleUseCase;
 import com.c2c.ws.application.port.out.presence.SessionPresencePort;
+import com.c2c.ws.common.exception.C2cException;
+import com.c2c.ws.common.exception.ErrorCode;
 import com.c2c.ws.common.util.IdGenerator;
 import com.c2c.ws.infrastructure.registry.SessionRegistry;
 import com.c2c.ws.infrastructure.registry.model.Conn;
@@ -78,7 +80,7 @@ public class SessionLifecycleService implements SessionLifecycleUseCase{
     public void touch(String userId) {
         if(!registry.touch(userId)){
             log.warn("touch: closed conn userId={}", userId);
-            throw new RuntimeException("CLOSED CONN");
+            throw new C2cException(ErrorCode.WS_SESSION_CLOSED);
         }
         log.debug("touch: userId={}, routingKey={}", userId, nodeRoutingKey);
         sessionPresencePort.markSessionActive(userId, nodeRoutingKey);

@@ -15,6 +15,8 @@ import com.c2c.ws.application.model.Status;
 import com.c2c.ws.application.port.in.ws.frame.FrameHandler;
 import com.c2c.ws.application.port.out.mq.PublishCommandPort;
 import com.c2c.ws.application.port.out.ws.SendToSessionPort;
+import com.c2c.ws.common.exception.C2cException;
+import com.c2c.ws.common.exception.ErrorCode;
 import com.c2c.ws.common.util.CommonMapper;
 import com.c2c.ws.common.util.IdGenerator;
 
@@ -57,7 +59,10 @@ public class SystemFrameHandler implements FrameHandler {
                 handleConnClosed(userId, frame);
                 break;
             default:
-                throw new RuntimeException("Unsupported system frame action: " + action);
+                throw new C2cException(
+                        ErrorCode.WS_UNSUPPORTED_SYSTEM_ACTION,
+                        "지원하지 않는 시스템 프레임 액션: " + action
+                );
         }
     }
 

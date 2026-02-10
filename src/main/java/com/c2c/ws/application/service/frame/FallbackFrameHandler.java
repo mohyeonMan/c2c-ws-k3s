@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import com.c2c.ws.adapter.in.ws.dto.CFrame;
 import com.c2c.ws.adapter.in.ws.dto.CFrameType;
 import com.c2c.ws.application.port.out.ws.SendToSessionPort;
+import com.c2c.ws.common.exception.C2cException;
+import com.c2c.ws.common.exception.ErrorCode;
 import com.c2c.ws.common.util.CommonMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +36,7 @@ public class FallbackFrameHandler extends AbstractCommandFrameHandler{
                 frame.getAction(),
                 frame.getRequestId());
         
-        throw new RuntimeException();
+        throw new C2cException(ErrorCode.WS_UNSUPPORTED_FRAME);
 
     }   
 }
